@@ -1,34 +1,28 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import HomeHooks from './playground/HomeHooks'
+import UseStatePractice from './playground/UseStatePractice'
+import UseDebugValuePractice from './playground/UseDebugValuePractice'
+import UseReducerPractice from './playground/UseReducerPractice'
+import UseRefPractice from './playground/UseRefPractice'
+import UseImperativeHandlePractice from './playground/UseImperativeHandlePractice'
+import UseMemoPractice from './playground/UseMemoPractice'
+import UseCallbackPractice from './playground/UseCallbackPractice'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/playground" replace />} />
+        <Route path="/playground" element={<HomeHooks />} />
+        <Route path="/playground/useState" element={<UseStatePractice />} />
+        <Route path="/playground/useDebugValue" element={<UseDebugValuePractice />} />
+        <Route path="/playground/useReducer" element={<UseReducerPractice />} />
+        <Route path="/playground/useRef" element={<UseRefPractice />} />
+        <Route path="/playground/useImperativeHandle" element={<UseImperativeHandlePractice />} />
+        <Route path="/playground/useMemo" element={<UseMemoPractice />} />
+        <Route path="/playground/useCallback" element={<UseCallbackPractice />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
