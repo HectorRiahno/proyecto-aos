@@ -1,0 +1,29 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import HomeHooks from './playground/HomeHooks'
+import UseStatePractice from './playground/UseStatePractice'
+import UseDebugValuePractice from './playground/UseDebugValuePractice'
+import UseReducerPractice from './playground/UseReducerPractice'
+import UseRefPractice from './playground/UseRefPractice'
+import UseImperativeHandlePractice from './playground/UseImperativeHandlePractice'
+import UseMemoPractice from './playground/UseMemoPractice'
+import UseCallbackPractice from './playground/UseCallbackPractice'
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/playground" replace />} />
+        <Route path="/playground" element={<HomeHooks />} />
+        <Route path="/playground/useState" element={<UseStatePractice />} />
+        <Route path="/playground/useDebugValue" element={<UseDebugValuePractice />} />
+        <Route path="/playground/useReducer" element={<UseReducerPractice />} />
+        <Route path="/playground/useRef" element={<UseRefPractice />} />
+        <Route path="/playground/useImperativeHandle" element={<UseImperativeHandlePractice />} />
+        <Route path="/playground/useMemo" element={<UseMemoPractice />} />
+        <Route path="/playground/useCallback" element={<UseCallbackPractice />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
+
+export default App
