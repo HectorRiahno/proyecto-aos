@@ -1,0 +1,181 @@
+import { Link } from "react-router-dom";
+
+const hooksData = [
+  {
+    name: "useDebugValue",
+    description:
+      "Muestra información adicional en React DevTools para debugging.",
+    category: "Debug",
+    path: "/playground/useDebugValue",
+  },
+  {
+    name: "useState",
+    description: "Maneja el estado dentro de un componente funcional.",
+    category: "Estado",
+    path: "/playground/useState",
+  },
+  {
+    name: "useReducer",
+    description: "Maneja estados complejos usando una función reductora.",
+    category: "Estado",
+    path: "/playground/useReducer",
+  },
+  {
+    name: "useRef",
+    description:
+      "Permite crear referencias persistentes a elementos del DOM o valores.",
+    category: "Referencias",
+    path: "/playground/useRef",
+  },
+  {
+    name: "useImperativeHandle",
+    description:
+      "Permite personalizar la referencia expuesta a componentes padres.",
+    category: "Referencias",
+    path: "/playground/useImperativeHandle",
+  },
+  {
+    name: "useMemo",
+    description: "Memoriza valores calculados para mejorar el rendimiento.",
+    category: "Performance",
+    path: "/playground/useMemo",
+  },
+  {
+    name: "useCallback",
+    description: "Memoriza funciones para evitar recrearlas en cada render.",
+    category: "Performance",
+    path: "/playground/useCallback",
+  },
+
+  // NUEVOS HOOKS
+
+  {
+    name: "useTransition",
+    description:
+      "Permite marcar actualizaciones como no urgentes para mejorar la experiencia del usuario.",
+    category: "Concurrent Rendering",
+    path: "/playground/useTransition",
+  },
+  {
+    name: "useDeferredValue",
+    description:
+      "Retrasa la actualización de un valor para evitar renders pesados.",
+    category: "Concurrent Rendering",
+    path: "/playground/useDeferredValue",
+  },
+  {
+    name: "useEffect",
+    description:
+      "Permite ejecutar efectos secundarios después del render del componente.",
+    category: "Efectos",
+    path: "/playground/useEffect",
+  },
+  {
+    name: "useLayoutEffect",
+    description:
+      "Similar a useEffect pero se ejecuta antes de que el navegador pinte en pantalla.",
+    category: "Efectos",
+    path: "/playground/useLayoutEffect",
+  },
+  {
+    name: "useInsertionEffect",
+    description:
+      "Se usa para insertar estilos antes del render, común en librerías de CSS-in-JS.",
+    category: "Efectos",
+    path: "/playground/useInsertionEffect",
+  },
+  {
+    name: "useContext",
+    description:
+      "Permite compartir datos entre componentes sin necesidad de pasar props manualmente.",
+    category: "Estado Global",
+    path: "/playground/useContext",
+  },
+  {
+  name: "useSyncExternalStore",
+  description:
+    "Permite suscribirse a stores externas de forma segura en aplicaciones concurrentes.",
+  category: "Estado Externo",
+  path: "/playground/useSyncExternalStore",
+},
+{
+  name: "useId",
+  description:
+    "Genera IDs únicos y estables para evitar conflictos entre cliente y servidor.",
+  category: "Utilidades",
+  path: "/playground/useId",
+},
+{
+  name: "use",
+  description:
+    "Permite consumir promesas o contextos directamente dentro de componentes.",
+  category: "React Server / Async",
+  path: "/playground/use",
+},
+{
+  name: "useOptimistic",
+  description:
+    "Permite mostrar actualizaciones optimistas en la UI antes de que la acción termine.",
+  category: "Acciones / Optimistic UI",
+  path: "/playground/useOptimistic",
+},
+{
+  name: "useActionState",
+  description:
+    "Maneja el estado de acciones del servidor como formularios o mutaciones.",
+  category: "Acciones",
+  path: "/playground/useActionState",
+},
+{
+  name: "useFormStatus",
+  description:
+    "Permite conocer el estado de envío de un formulario dentro de Server Actions.",
+  category: "Formularios",
+  path: "/playground/useFormStatus",
+},
+];
+
+function HomeHooks() {
+  return (
+    <div>
+      <header>
+        <h1>Ejemplos de Hooks en React</h1>
+      </header>
+
+      <div className="main-content">
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Hook</th>
+                <th>Ruta</th>
+                <th>Descripción</th>
+                <th>Categoría</th>
+              </tr>
+            </thead>
+            <tbody>
+              {hooksData.map((hook, index) => (
+                <tr key={index}>
+                  <td>
+                    <code>{hook.name}</code>
+                  </td>
+                  <td>
+                    <Link to={hook.path} className="btn-ejemplo">
+                      Ir a ejemplo
+                    </Link>
+                  </td>
+                  <td>{hook.description}</td>
+                  <td>
+                    <span className="category-tag">{hook.category}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default HomeHooks;
