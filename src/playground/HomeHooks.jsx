@@ -46,6 +46,51 @@ const hooksData = [
     category: "Performance",
     path: "/playground/useCallback",
   },
+
+  // NUEVOS HOOKS
+
+  {
+    name: "useTransition",
+    description:
+      "Permite marcar actualizaciones como no urgentes para mejorar la experiencia del usuario.",
+    category: "Concurrent Rendering",
+    path: "/playground/useTransition",
+  },
+  {
+    name: "useDeferredValue",
+    description:
+      "Retrasa la actualización de un valor para evitar renders pesados.",
+    category: "Concurrent Rendering",
+    path: "/playground/useDeferredValue",
+  },
+  {
+    name: "useEffect",
+    description:
+      "Permite ejecutar efectos secundarios después del render del componente.",
+    category: "Efectos",
+    path: "/playground/useEffect",
+  },
+  {
+    name: "useLayoutEffect",
+    description:
+      "Similar a useEffect pero se ejecuta antes de que el navegador pinte en pantalla.",
+    category: "Efectos",
+    path: "/playground/useLayoutEffect",
+  },
+  {
+    name: "useInsertionEffect",
+    description:
+      "Se usa para insertar estilos antes del render, común en librerías de CSS-in-JS.",
+    category: "Efectos",
+    path: "/playground/useInsertionEffect",
+  },
+  {
+    name: "useContext",
+    description:
+      "Permite compartir datos entre componentes sin necesidad de pasar props manualmente.",
+    category: "Estado Global",
+    path: "/playground/useContext",
+  },
 ];
 
 function HomeHooks() {
@@ -91,4 +136,4 @@ function HomeHooks() {
   );
 }
 
-export default HomeHooks
+export default HomeHooks;

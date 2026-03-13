@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+
 import HomeHooks from './playground/HomeHooks'
+
 import UseStatePractice from './playground/UseStatePractice'
 import UseDebugValuePractice from './playground/UseDebugValuePractice'
 import UseReducerPractice from './playground/UseReducerPractice'
@@ -8,12 +10,22 @@ import UseImperativeHandlePractice from './playground/UseImperativeHandlePractic
 import UseMemoPractice from './playground/UseMemoPractice'
 import UseCallbackPractice from './playground/UseCallbackPractice'
 
+import UseTransitionPractice from './playground/UseTransitionPractice'
+import UseDeferredValuePractice from './playground/UseDeferredValuePractice'
+import UseEffectPractice from './playground/UseEffectPractice'
+import UseLayoutEffectPractice from './playground/UseLayoutEffectPractice'
+import UseInsertionEffectPractice from './playground/UseInsertionEffectPractice'
+import UseContextPractice from './playground/UseContextPractice'
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+
         <Route path="/" element={<Navigate to="/playground" replace />} />
+
         <Route path="/playground" element={<HomeHooks />} />
+
         <Route path="/playground/useState" element={<UseStatePractice />} />
         <Route path="/playground/useDebugValue" element={<UseDebugValuePractice />} />
         <Route path="/playground/useReducer" element={<UseReducerPractice />} />
@@ -21,6 +33,14 @@ function App() {
         <Route path="/playground/useImperativeHandle" element={<UseImperativeHandlePractice />} />
         <Route path="/playground/useMemo" element={<UseMemoPractice />} />
         <Route path="/playground/useCallback" element={<UseCallbackPractice />} />
+
+        <Route path="/playground/useTransition" element={<UseTransitionPractice />} />
+        <Route path="/playground/useDeferredValue" element={<UseDeferredValuePractice />} />
+        <Route path="/playground/useEffect" element={<UseEffectPractice />} />
+        <Route path="/playground/useLayoutEffect" element={<UseLayoutEffectPractice />} />
+        <Route path="/playground/useInsertionEffect" element={<UseInsertionEffectPractice />} />
+        <Route path="/playground/useContext" element={<UseContextPractice />} />
+
       </Routes>
     </BrowserRouter>
   )
