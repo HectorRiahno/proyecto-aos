@@ -91,6 +91,48 @@ const hooksData = [
     category: "Estado Global",
     path: "/playground/useContext",
   },
+  {
+  name: "useSyncExternalStore",
+  description:
+    "Permite suscribirse a stores externas de forma segura en aplicaciones concurrentes.",
+  category: "Estado Externo",
+  path: "/playground/useSyncExternalStore",
+},
+{
+  name: "useId",
+  description:
+    "Genera IDs únicos y estables para evitar conflictos entre cliente y servidor.",
+  category: "Utilidades",
+  path: "/playground/useId",
+},
+{
+  name: "use",
+  description:
+    "Permite consumir promesas o contextos directamente dentro de componentes.",
+  category: "React Server / Async",
+  path: "/playground/use",
+},
+{
+  name: "useOptimistic",
+  description:
+    "Permite mostrar actualizaciones optimistas en la UI antes de que la acción termine.",
+  category: "Acciones / Optimistic UI",
+  path: "/playground/useOptimistic",
+},
+{
+  name: "useActionState",
+  description:
+    "Maneja el estado de acciones del servidor como formularios o mutaciones.",
+  category: "Acciones",
+  path: "/playground/useActionState",
+},
+{
+  name: "useFormStatus",
+  description:
+    "Permite conocer el estado de envío de un formulario dentro de Server Actions.",
+  category: "Formularios",
+  path: "/playground/useFormStatus",
+},
 ];
 
 function HomeHooks() {

@@ -17,6 +17,13 @@ import UseLayoutEffectPractice from './playground/UseLayoutEffectPractice'
 import UseInsertionEffectPractice from './playground/UseInsertionEffectPractice'
 import UseContextPractice from './playground/UseContextPractice'
 
+import UseSyncExternalStore from './playground/UseSyncExternalStore'
+import UseId from './playground/UseId'
+import Use from './playground/Use'
+import UseOptimistic from './playground/UseOptimistic'
+import UseActionState from './playground/UseActionState'
+import UseFormStatus from './playground/UseFormStatus'
+
 function App() {
   return (
     <BrowserRouter>
@@ -40,6 +47,13 @@ function App() {
         <Route path="/playground/useLayoutEffect" element={<UseLayoutEffectPractice />} />
         <Route path="/playground/useInsertionEffect" element={<UseInsertionEffectPractice />} />
         <Route path="/playground/useContext" element={<UseContextPractice />} />
+
+        <Route path="/playground/useSyncExternalStore" element={<UseSyncExternalStore />} />
+        <Route path="/playground/useId" element={<UseId />} />
+        <Route path="/playground/use" element={<Use />} />
+        <Route path="/playground/useOptimistic" element={<UseOptimistic />} />
+        <Route path="/playground/useActionState" element={<UseActionState />} />
+        <Route path="/playground/useFormStatus" element={<UseFormStatus />} />
 
       </Routes>
     </BrowserRouter>
