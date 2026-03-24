@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import LoginPage from './pages/LoginPage'
 
 import HomeHooks from './playground/HomeHooks'
 
@@ -29,7 +30,7 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        <Route path="/" element={<Navigate to="/playground" replace />} />
+        <Route path="/" element={<LoginPage />} />
 
         <Route path="/playground" element={<HomeHooks />} />
 
