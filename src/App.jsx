@@ -25,6 +25,8 @@ import UseOptimistic from './playground/UseOptimistic'
 import UseActionState from './playground/UseActionState'
 import UseFormStatus from './playground/UseFormStatus'
 import RegisterPage from './pages/RegisterPage'
+import ForgotPage from './pages/ForgotPassword'
+import ResetPage from './pages/ResestPassword'
 
 function App() {
   return (
@@ -33,6 +35,8 @@ function App() {
 
         <Route path="/" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot" element={<ForgotPage />} />
+        <Route path="/reset" element={<ResetPage />} />
 
         <Route path="/playground" element={<HomeHooks />} />
 
