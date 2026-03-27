@@ -6,6 +6,7 @@ function RegisterPage() {
   const navigate = useNavigate();
 
   const [telephone, setTelephone] = useState("");
+  const [document, setDocument] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,8 +18,16 @@ function RegisterPage() {
 
     if (!telephone) {
       newErrors.telephone = "El teléfono es obligatorio.";
+    } else if (!/^\d+$/.test(telephone)) {
+      newErrors.telephone = "El teléfono debe contener solo números.";
     } else if (telephone.length !== 10) {
       newErrors.telephone = "Debe tener 10 dígitos.";
+    }
+
+    if (!document) {
+      newErrors.document = "El documento es obligatorio.";
+    } else if (!/^\d+$/.test(document)) {
+      newErrors.document = "El documento debe contener solo números.";
     }
 
     if (!username) {
@@ -55,7 +64,7 @@ function RegisterPage() {
     setErrors({});
 
     alert(
-      `Datos del formulario:\nTeléfono: ${telephone}\nUsuario: ${username}\nEmail: ${email}\nContraseña: ${password}`
+      `Datos del formulario:\nTeléfono: ${telephone}\nDocumento: ${document}\nUsuario: ${username}\nEmail: ${email}\nContraseña: ${password}`
     );
   };
 
@@ -92,6 +101,25 @@ function RegisterPage() {
             {errors.telephone && (
               <p className="text-red-500 text-xs mt-1">
                 {errors.telephone}
+              </p>
+            )}
+          </div>
+
+          {/* Documento */}
+          <div>
+            <label className="text-sm text-gray-600">Documento</label>
+            <div className="mt-1 relative">
+              <input
+                value={document}
+                onChange={(e) => setDocument(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
+                placeholder="Número de documento"
+              />
+              <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+            </div>
+            {errors.document && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.document}
               </p>
             )}
           </div>
