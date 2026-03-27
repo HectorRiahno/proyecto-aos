@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [document, setDocument] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
@@ -14,7 +13,6 @@ function LoginPage() {
     e.preventDefault();
     const newErrors = {};
 
-    if (!document) newErrors.document = 'El documento es obligatorio.';
     if (!username) newErrors.username = 'El usuario es obligatorio.';
     if (!password) {
       newErrors.password = 'La contraseña es obligatoria.';
@@ -29,7 +27,7 @@ function LoginPage() {
 
     setErrors({});
 
-    alert(`Datos del Formulario:\nDocumento: ${document}\nUsuario: ${username}\nContraseña: ${password}`);
+    alert(`Datos del Formulario:\nUsuario: ${username}\nContraseña: ${password}`);
   };
 
   return (
@@ -47,17 +45,6 @@ function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm text-gray-600">Documento</label>
-            <input
-              value={document}
-              onChange={(e) => setDocument(e.target.value)}
-              className="w-full mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Número de documento"
-            />
-            {errors.document && <p className="text-red-500 text-xs mt-1">{errors.document}</p>}
-          </div>
-
           <div>
             <label className="text-sm text-gray-600">Usuario</label>
             <div className="mt-1 relative">
