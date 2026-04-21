@@ -1,23 +1,30 @@
 import React, { useState } from 'react';
 import { Lock, User, LogIn, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const { login } = useAuth();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
-    if (!username) newErrors.username = 'El usuario es obligatorio.';
+    if (!email) newErrors.email = 'El email es obligatorio.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Email inválido.';
+    }
+
     if (!password) {
       newErrors.password = 'La contraseña es obligatoria.';
-    } else if (password.length < 8) {
-      newErrors.password = 'La contraseña debe tener al menos 8 caracteres.';
+    } else if (password.length < 6) {
+      newErrors.password = 'La contraseña debe tener al menos 6 caracteres.';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -26,8 +33,24 @@ function LoginPage() {
     }
 
     setErrors({});
+    setLoading(true);
 
-    alert(`Datos del Formulario:\nUsuario: ${username}\nContraseña: ${password}`);
+    try {
+      await login(email, password);
+      navigate('/');
+    } catch (error) {
+      let errorMessage = 'Error al iniciar sesión';
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'El usuario no existe';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Contraseña incorrecta';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Email inválido';
+      }
+      setErrors({ general: errorMessage });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,17 +69,18 @@ function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm text-gray-600">Usuario</label>
+            <label className="text-sm text-gray-600">Email</label>
             <div className="mt-1 relative">
               <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
-                placeholder="Usuario"
+                placeholder="tu@email.com"
               />
               <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
             </div>
-            {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
 
           <div>
@@ -82,11 +106,14 @@ function LoginPage() {
           </div>
 
 
+          {errors.general && <p className="text-red-500 text-sm text-center">{errors.general}</p>}
+
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer disabled:bg-blue-400 disabled:cursor-not-allowed"
           >
-            <LogIn className="w-4 h-4" /> Ingresar
+            <LogIn className="w-4 h-4" /> {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
 
           <div className="text-center space-y-2">
