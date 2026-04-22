@@ -68,7 +68,11 @@ function RegisterPage() {
     setLoading(true);
 
     try {
-      await signup(email, password);
+      await signup(email, password, {
+        username,
+        telephone,
+        document,
+      });
       navigate('/');
     } catch (error) {
       let errorMessage = 'Error al registrarse';

@@ -6,6 +6,12 @@ import RegisterPage from '../pages/RegisterPage'
 import ForgotPage from '../pages/ForgotPassword'
 import ResetPage from '../pages/ResestPassword'
 
+//Home
+import Home from '../pages/Home'
+
+// Sesiones
+import SessionsPage from '../pages/SessionsPage'
+
 // Playground Home
 import HomeHooks from '../playground/HomeHooks'
 
@@ -39,6 +45,12 @@ function AppRouter() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot" element={<ForgotPage />} />
       <Route path="/reset" element={<ResetPage />} />
+
+      {/* Home */}
+      <Route path="/Home" element={<Home />} />
+
+      {/* sesiones */}
+      <Route path="/sessions" element={<SessionsPage />} />
 
       {/* Playground */}
       <Route path="/playground" element={<HomeHooks />} />
