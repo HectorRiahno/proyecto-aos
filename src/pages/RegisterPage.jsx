@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { User, Lock, Eye, EyeOff, Mail, Phone, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { signup } = useAuth();
 
   const [telephone, setTelephone] = useState("");
   const [document, setDocument] = useState("");
@@ -12,6 +14,7 @@ function RegisterPage() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const validate = () => {
     const newErrors = {};
@@ -51,7 +54,7 @@ function RegisterPage() {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const validationErrors = validate();
@@ -62,10 +65,28 @@ function RegisterPage() {
     }
 
     setErrors({});
+    setLoading(true);
 
-    alert(
-      `Datos del formulario:\nTeléfono: ${telephone}\nDocumento: ${document}\nUsuario: ${username}\nEmail: ${email}\nContraseña: ${password}`
-    );
+    try {
+      await signup(email, password, {
+        username,
+        telephone,
+        document,
+      });
+      navigate('/');
+    } catch (error) {
+      let errorMessage = 'Error al registrarse';
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'El email ya está registrado';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'La contraseña es muy débil';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Email inválido';
+      }
+      setErrors({ general: errorMessage });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -177,7 +198,7 @@ function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 cursor-pointer"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -189,12 +210,16 @@ function RegisterPage() {
             )}
           </div>
 
+          {/* Mensaje de error general */}
+          {errors.general && <p className="text-red-500 text-sm text-center">{errors.general}</p>}
+
           {/* Botón */}
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer disabled:bg-blue-400 disabled:cursor-not-allowed"
           >
-            <UserPlus className="w-4 h-4" /> Registrarse
+            <UserPlus className="w-4 h-4" /> {loading ? 'Registrando...' : 'Registrarse'}
           </button>
 
           {/* Navegación */}
