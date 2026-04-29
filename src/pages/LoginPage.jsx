@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Lock, User, LogIn, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, LogIn, Eye, EyeOff, Hospital } from 'lucide-react';
+import { FcGoogle } from 'react-icons/fc';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -72,7 +73,7 @@ const handleGoogleLogin = async () => {
         {/* Header */}
         <div className="flex flex-col items-center mb-4">
           <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white mb-3">
-            <LogIn />
+            <Hospital size={28} />
           </div>
           <h3 className="text-lg font-semibold">HospitalIS PRO</h3>
           <p className="text-sm text-gray-500">
@@ -96,7 +97,7 @@ const handleGoogleLogin = async () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-2 border rounded pl-10 focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border border-gray-300 rounded pl-10 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 placeholder="tu@email.com"
               />
               <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
@@ -111,7 +112,7 @@ const handleGoogleLogin = async () => {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 border rounded pl-10 pr-10 focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border border-gray-300 rounded pl-10 pr-10 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 placeholder="Contraseña"
               />
               <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
@@ -119,7 +120,7 @@ const handleGoogleLogin = async () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-gray-400"
+                className="absolute right-3 top-3 text-gray-400 cursor-pointer"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -130,7 +131,7 @@ const handleGoogleLogin = async () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-blue-400"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-blue-400 cursor-pointer disabled:cursor-not-allowed"
           >
             <LogIn className="w-4 h-4" />
             {loading ? 'Ingresando...' : 'Ingresar'}
@@ -139,8 +140,9 @@ const handleGoogleLogin = async () => {
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition font-medium"
+            className="w-full flex items-center justify-center gap-3 border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition font-medium cursor-pointer"
           >
+            <FcGoogle className="w-5 h-5" />
             Continuar con Google
           </button>
 
@@ -149,7 +151,7 @@ const handleGoogleLogin = async () => {
             <button
               type="button"
               onClick={() => navigate('/forgot')}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-blue-600 hover:underline cursor-pointer"
             >
               Recuperar contraseña
             </button>
@@ -157,7 +159,7 @@ const handleGoogleLogin = async () => {
             <button
               type="button"
               onClick={() => navigate('/register')}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-blue-600 hover:underline cursor-pointer"
             >
               ¿Usuario nuevo? Regístrate
             </button>

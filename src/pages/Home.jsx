@@ -1,5 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { LogIn, Hospital } from "lucide-react";
 
 function Home() {
   const { user, logout, loading } = useAuth();
@@ -18,14 +19,19 @@ function Home() {
   const initial = user?.email?.charAt(0).toUpperCase();
 
   if (loading) {
-    return <h1 className="text-center mt-10 text-xl">Loading...</h1>;
+    return <h1 className="text-center mt-10 text-xl">Cargando...</h1>;
   }
 
   return (
     <div className="min-h-screen bg-slate-100">
       
-      <header className="bg-white shadow-md px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-blue-600">HIS</h1>
+      <header className="bg-white border-b border-gray-300 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
+            <Hospital size={18} />
+          </div>
+          <h1 className="text-xl font-bold text-blue-600">HospitalIS PRO</h1>
+        </div>
 
         <div className="flex items-center gap-4">
           <span className="text-slate-600 hidden sm:block">
@@ -35,8 +41,9 @@ function Home() {
           {user.photoURL ? (
             <img
               src={user.photoURL}
-              alt="user"
-              className="w-10 h-10 rounded-full object-cover border"
+              alt="usuario"
+              referrerPolicy="no-referrer"
+              className="w-10 h-10 rounded-full object-cover border border-gray-300"
             />
           ) : (
             <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold">
@@ -46,9 +53,9 @@ function Home() {
 
           <button
             onClick={handleLogout}
-            className="bg-slate-200 hover:bg-slate-300 transition px-4 py-2 rounded-lg text-sm font-medium"
+            className="bg-red-600 hover:bg-red-700 transition px-4 py-2 rounded-lg text-sm font-medium text-white cursor-pointer"
           >
-            Logout
+            Cerrar Sesión
           </button>
         </div>
       </header>
@@ -60,7 +67,7 @@ function Home() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           
-          <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+          <div className="bg-white p-5 rounded-xl border border-gray-300 hover:border-gray-500 transition cursor-pointer">
             <h3 className="text-lg font-semibold text-slate-700">
               Pacientes
             </h3>
@@ -69,7 +76,7 @@ function Home() {
             </p>
           </div>
 
-          <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+          <div className="bg-white p-5 rounded-xl border border-gray-300 hover:border-gray-500 transition cursor-pointer">
             <h3 className="text-lg font-semibold text-slate-700">
               Citas
             </h3>
@@ -78,7 +85,7 @@ function Home() {
             </p>
           </div>
 
-          <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+          <div className="bg-white p-5 rounded-xl border border-gray-300 hover:border-gray-500 transition cursor-pointer">
             <h3 className="text-lg font-semibold text-slate-700">
               Historias Clínicas
             </h3>
@@ -87,13 +94,13 @@ function Home() {
             </p>
           </div>
 
-          <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition" >
+          <div className="bg-white p-5 rounded-xl border border-gray-300 hover:border-gray-500 transition cursor-pointer" >
             <h3 className="text-lg font-semibold text-slate-700">
               Sesiones
             </h3>
             <p className="text-slate-500 text-sm mt-2">
-              sesiones de los usuarios. <a href="/sessions" className="text-blue-500 hover:underline">
-                click here
+              Ver el historial de sesiones de los usuarios. <a href="/sessions" className="text-blue-500 hover:underline">
+                haz clic aquí
               </a>
             </p>
           </div>

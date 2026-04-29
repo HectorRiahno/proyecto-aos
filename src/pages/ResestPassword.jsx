@@ -13,7 +13,7 @@ function ResetPage() {
     confirmPassword: false,
   });
 
-  // ✅ Reglas de validación
+  // Reglas de validación
   const hasMinLength = password.length >= 8;
   const hasUppercase = /[A-Z]/.test(password);
   const hasSpecialChar = /[@$!%*?&]/.test(password);
@@ -78,7 +78,7 @@ function ResetPage() {
               </button>
             </div>
 
-            {/* 🔽 Reglas visuales */}
+            {/* Reglas visuales */}
             {touched.password && (
               <div className="text-xs mt-2 space-y-1">
                 <p className={hasMinLength ? 'text-green-500' : 'text-red-500'}>

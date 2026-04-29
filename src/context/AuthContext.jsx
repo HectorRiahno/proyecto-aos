@@ -26,12 +26,13 @@ export function AuthProvider({ children }) {
   const [sessionId, setSessionId] = useState(null);
 
   // Función para crear un registro de sesión
-  const createSessionRecord = async (userEmail, userName, authMethod) => {
+  const createSessionRecord = async (userEmail, userName, authMethod, photoURL) => {
     try {
       const sessionRef = await addDoc(collection(db, "sessions"), {
         email: userEmail,
         username: userName || "",
         provider: authMethod,
+        photoURL: photoURL || "",
         status: "activa",
         loginTime: new Date(),
         logoutTime: null,
@@ -86,7 +87,7 @@ export function AuthProvider({ children }) {
     });
 
     // Registrar sesión
-    await createSessionRecord(email, userData.username || "", "correo");
+    await createSessionRecord(email, userData.username || "", "correo", "");
 
     return userCredential;
   };
@@ -95,7 +96,7 @@ export function AuthProvider({ children }) {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
     // Registrar sesión
-    await createSessionRecord(email, userCredential.user.displayName || "", "correo");
+    await createSessionRecord(email, userCredential.user.displayName || "", "correo", "");
 
     return userCredential;
   };
@@ -132,7 +133,8 @@ export function AuthProvider({ children }) {
     await createSessionRecord(
       userCredential.user.email,
       userCredential.user.displayName || "",
-      "google"
+      "google",
+      userCredential.user.photoURL || ""
     );
 
     return userCredential;

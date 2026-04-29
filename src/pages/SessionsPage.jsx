@@ -1,34 +1,53 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
-import { LogOut, LogIn, Search } from "lucide-react";
+import { LogOut, LogIn, Search, Mail, Hospital } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 
 function SessionsPage() {
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("todos"); // todos, activas, finalizadas
+  const [filterType, setFilterType] = useState("todos");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
     // Escuchar cambios en tiempo real
-    const unsubscribe = onSnapshot(collection(db, "sessions"), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
+    const unsubscribeSessions = onSnapshot(collection(db, "sessions"), (sessionSnapshot) => {
+      const sessionData = sessionSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
 
-      // Ordenar por fecha más reciente
-      data.sort((a, b) => {
-        const timeA = a.loginTime?.toDate?.() || a.loginTime || new Date(0);
-        const timeB = b.loginTime?.toDate?.() || b.loginTime || new Date(0);
-        return timeB - timeA;
-      });
+      // También obtenemos los usuarios para completar fotos faltantes
+      onSnapshot(collection(db, "users"), (userSnapshot) => {
+        const userData = {};
+        userSnapshot.docs.forEach(doc => {
+          userData[doc.data().email] = doc.data().photoURL;
+        });
 
-      setSessions(data);
+        const mergedData = sessionData.map(session => ({
+          ...session,
+          // Si la sesión no tiene foto, la buscamos por email en la colección de usuarios
+          photoURL: session.photoURL || userData[session.email] || ""
+        }));
+
+        // Ordenar por fecha más reciente
+        mergedData.sort((a, b) => {
+          const timeA = a.loginTime?.toDate?.() || a.loginTime || new Date(0);
+          const timeB = b.loginTime?.toDate?.() || b.loginTime || new Date(0);
+          return timeB - timeA;
+        });
+
+        setSessions(mergedData);
+      });
     }, (error) => {
       console.error("Error al obtener sesiones:", error);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeSessions();
   }, []);
 
   // Filtrar sesiones
@@ -43,6 +62,17 @@ function SessionsPage() {
 
     return matchesSearch && matchesStatus;
   });
+
+  // Paginación
+  const totalPages = Math.ceil(filteredSessions.length / ITEMS_PER_PAGE);
+  const paginatedSessions = filteredSessions.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Resetear página al cambiar filtros
+  const handleSearchChange = (value) => { setSearch(value); setCurrentPage(1); };
+  const handleFilterChange = (value) => { setFilterType(value); setCurrentPage(1); };
 
   // Función para formatear fecha
   const formatDate = (date) => {
@@ -69,12 +99,12 @@ function SessionsPage() {
   // Función para obtener color según método
   const getProviderColor = (provider) => {
     const colors = {
-      correo: "bg-blue-100 text-blue-800",
-      google: "bg-red-100 text-red-800",
-      facebook: "bg-blue-600 text-white",
-      github: "bg-gray-800 text-white"
+      correo: "bg-blue-50 text-blue-700 border-blue-200",
+      google: "bg-red-50 text-red-700 border-red-200",
+      facebook: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      github: "bg-gray-100 text-gray-700 border-gray-300"
     };
-    return colors[provider] || "bg-gray-100 text-gray-800";
+    return colors[provider] || "bg-gray-50 text-gray-700 border-gray-200";
   };
 
   // Función para obtener color según estado
@@ -85,98 +115,130 @@ function SessionsPage() {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-slate-50 min-h-screen">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Historial de Sesiones</h1>
-        <p className="text-gray-600">Seguimiento de accesos de usuarios a la aplicación</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
+              <Hospital size={18} />
+            </div>
+            <h1 className="text-xl font-bold text-blue-600">HospitalIS PRO</h1>
+          </div>
+          <h2 className="text-3xl font-bold text-slate-700">Historial de Sesiones</h2>
+          <p className="text-slate-500 mt-1">Seguimiento de accesos de usuarios a la aplicación</p>
+        </div>
+        
+        <button 
+          onClick={() => navigate('/Home')}
+          className="bg-slate-200 hover:bg-slate-300 transition px-4 py-2 rounded-lg text-sm font-medium cursor-pointer border border-gray-300"
+        >
+          Volver al Home
+        </button>
       </div>
 
-      {/* Filtros y Búsqueda */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          {/* Buscador */}
-          {/* <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Buscar
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar por email, usuario o método..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div> */}
-
-          {/* Filtro por estado */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Estado
-            </label>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="todos">Todos</option>
-              <option value="activa">Activas</option>
-              <option value="finalizada">Finalizadas</option>
-            </select>
+      {/* Filtros */}
+      <div className="bg-white p-4 border border-gray-300 rounded-xl mb-6 flex flex-col md:flex-row md:items-end gap-4">
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-slate-600 mb-2">
+            Buscar Sesión
+          </label>
+          <div className="relative">
+            <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar por email, usuario o método..."
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700 bg-white"
+            />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-600 mb-2">
+            Estado
+          </label>
+          <select
+            value={filterType}
+            onChange={(e) => handleFilterChange(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer text-slate-700 bg-white"
+          >
+            <option value="todos">Todos los estados</option>
+            <option value="activa">Sesiones Activas</option>
+            <option value="finalizada">Sesiones Finalizadas</option>
+          </select>
         </div>
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white border border-gray-500 rounded-xl overflow-hidden">
         {filteredSessions.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Email</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Usuario</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Método</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Entrada</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Salida</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Duración</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold text-gray-800">Estado</th>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-slate-100 border-b border-gray-500">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Email</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Usuario</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Método</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Entrada</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Salida</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Duración</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase">Estado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredSessions.map((session) => (
-                  <tr key={session.id} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4 text-sm text-gray-900">{session.email}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{session.username || "—"}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getProviderColor(session.provider)}`}>
-                        {session.provider?.charAt(0).toUpperCase() + session.provider?.slice(1)}
-                      </span>
+              <tbody>
+                {paginatedSessions.map((session) => (
+                  <tr key={session.id} className="hover:bg-slate-100 transition border-b border-gray-500 last:border-0">
+                    <td className="px-6 py-4 text-sm text-slate-600">{session.email}</td>
+                    <td className="px-6 py-4 text-sm text-slate-700">
+                      <div className="flex items-center gap-3">
+                        {session.photoURL ? (
+                          <img 
+                            src={session.photoURL} 
+                            alt="" 
+                            referrerPolicy="no-referrer"
+                            className="w-8 h-8 rounded-full border border-gray-300 shadow-sm" 
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 border border-blue-200">
+                            {session.username?.charAt(0).toUpperCase() || "?"}
+                          </div>
+                        )}
+                        <span className="font-medium">{session.username || "—"}</span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${getProviderColor(session.provider)}`}>
+                        {session.provider === 'google' ? (
+                          <FcGoogle className="w-3.5 h-3.5" />
+                        ) : (
+                          <Mail className="w-3.5 h-3.5" />
+                        )}
+                        <span>{session.provider?.charAt(0).toUpperCase() + session.provider?.slice(1)}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
                       <div className="flex items-center gap-2">
                         <LogIn className="w-4 h-4 text-green-500" />
                         {formatDate(session.loginTime)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm text-slate-600">
                       {session.logoutTime ? (
                         <div className="flex items-center gap-2">
                           <LogOut className="w-4 h-4 text-red-500" />
                           {formatDate(session.logoutTime)}
                         </div>
                       ) : (
-                        "—"
+                        <span className="text-slate-400">—</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                    <td className="px-6 py-4 text-sm text-slate-700 font-medium">
                       {calculateDuration(session.loginTime, session.logoutTime)}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(session.status)}`}>
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(session.status)}`}>
                         {session.status?.charAt(0).toUpperCase() + session.status?.slice(1)}
                       </span>
                     </td>
@@ -186,29 +248,43 @@ function SessionsPage() {
             </table>
           </div>
         ) : (
-          <div className="p-8 text-center">
-            <p className="text-gray-500 text-lg">No hay sesiones registradas</p>
+          <div className="p-12 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 text-slate-400 mb-4">
+              <Search className="w-8 h-8" />
+            </div>
+            <p className="text-slate-500 text-lg font-medium">No se encontraron sesiones registradas</p>
           </div>
         )}
       </div>
 
-      {/* Estadísticas */}
-      {sessions.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <h3 className="text-sm font-semibold text-gray-600 mb-2">Total de Sesiones</h3>
-            <p className="text-2xl font-bold text-gray-800">{sessions.length}</p>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <h3 className="text-sm font-semibold text-gray-600 mb-2">Sesiones Activas</h3>
-            <p className="text-2xl font-bold text-green-600">{sessions.filter(s => s.status === "activa").length}</p>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <h3 className="text-sm font-semibold text-gray-600 mb-2">Sesiones Finalizadas</h3>
-            <p className="text-2xl font-bold text-gray-800">{sessions.filter(s => s.status === "finalizada").length}</p>
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-sm text-slate-500">
+            Mostrando <span className="font-semibold text-slate-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> – <span className="font-semibold text-slate-700">{Math.min(currentPage * ITEMS_PER_PAGE, filteredSessions.length)}</span> de <span className="font-semibold text-slate-700">{filteredSessions.length}</span> sesiones
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-600 px-2">
+              Página <span className="font-semibold">{currentPage}</span> de <span className="font-semibold">{totalPages}</span>
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
+            >
+              Siguiente →
+            </button>
           </div>
         </div>
       )}
+
     </div>
   );
 }
