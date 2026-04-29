@@ -4,6 +4,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { LogOut, LogIn, Search, Mail, Hospital } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
+import { FaGithub } from "react-icons/fa";
 
 function SessionsPage() {
   const navigate = useNavigate();
@@ -212,6 +213,8 @@ function SessionsPage() {
                       <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${getProviderColor(session.provider)}`}>
                         {session.provider === 'google' ? (
                           <FcGoogle className="w-3.5 h-3.5" />
+                        ) : session.provider === 'github' ? (
+                          <FaGithub className="w-3.5 h-3.5" />
                         ) : (
                           <Mail className="w-3.5 h-3.5" />
                         )}

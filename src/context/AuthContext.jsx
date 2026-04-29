@@ -5,8 +5,11 @@ import {
   onAuthStateChanged,
   signOut,
   GoogleAuthProvider,
+  GithubAuthProvider,
   signInWithPopup,
   sendPasswordResetEmail,
+  linkWithCredential,
+  fetchSignInMethodsForEmail,
 } from "firebase/auth";
 
 import { auth, db } from "../firebase";
@@ -137,7 +140,102 @@ export function AuthProvider({ children }) {
       userCredential.user.photoURL || ""
     );
 
+    // ✅ Vincular GitHub pendiente si el usuario intentó entrar por GitHub antes
+    const pendingCredRaw = localStorage.getItem("pendingGithubCred");
+    const pendingEmail = localStorage.getItem("pendingGithubEmail");
+
+    if (pendingCredRaw && pendingEmail === userCredential.user.email) {
+      try {
+        const { OAuthProvider } = await import("firebase/auth");
+        const pendingCredData = JSON.parse(pendingCredRaw);
+        const pendingCred = GithubAuthProvider.credential(
+          pendingCredData.accessToken
+        );
+        await linkWithCredential(userCredential.user, pendingCred);
+        console.log("✅ GitHub vinculado exitosamente a la cuenta de Google.");
+      } catch (linkError) {
+        console.warn("No se pudo vincular GitHub:", linkError.message);
+      } finally {
+        localStorage.removeItem("pendingGithubCred");
+        localStorage.removeItem("pendingGithubEmail");
+      }
+    }
+
     return userCredential;
+  };
+
+  const loginWithGitHub = async () => {
+    const githubProvider = new GithubAuthProvider();
+
+    try {
+      const userCredential = await signInWithPopup(auth, githubProvider);
+      const { user } = userCredential;
+
+      // Guardar datos del usuario en Firestore
+      await setDoc(
+        doc(db, "users", user.uid),
+        {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || "",
+          photoURL: user.photoURL || "",
+          username: user.displayName || "",
+          telephone: "",
+          document: "",
+          loginMethod: "github",
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
+
+      // Registrar sesión — misma foto/nombre sin importar el proveedor
+      await createSessionRecord(
+        user.email,
+        user.displayName || "",
+        "github",
+        user.photoURL || ""
+      );
+
+      return userCredential;
+
+    } catch (error) {
+      // El correo ya existe con otro proveedor → hacer account linking
+      if (error.code === "auth/account-exists-with-different-credential") {
+        const email = error.customData?.email;
+        const pendingCred = GithubAuthProvider.credentialFromError(error);
+
+        // Guardar credencial pendiente para usarla después del login con el otro proveedor
+        if (pendingCred) {
+          localStorage.setItem("pendingGithubCred", JSON.stringify(pendingCred));
+        }
+        if (email) {
+          localStorage.setItem("pendingGithubEmail", email);
+        }
+
+        // Intentar obtener los proveedores (puede estar vacío si Firebase tiene
+        // la protección de enumeración de emails activada)
+        let providerNames = "";
+        try {
+          const methods = await fetchSignInMethodsForEmail(auth, email);
+          providerNames = methods.map(m => {
+            if (m === "google.com") return "Google";
+            if (m === "password") return "correo y contraseña";
+            if (m === "github.com") return "GitHub";
+            return m;
+          }).join(", ");
+        } catch (_) { /* ignorar si falla */ }
+
+        const providerMsg = providerNames
+          ? `con: ${providerNames}`
+          : "con otro proveedor (Google o correo)";
+
+        throw new Error(
+          `Este correo ya está registrado ${providerMsg}. Inicia sesión con ese proveedor primero.`
+        );
+      }
+
+      throw error;
+    }
   };
 
   const resetPassword = (email) => {
@@ -162,6 +260,7 @@ export function AuthProvider({ children }) {
         logout,
         loading,
         loginWithGoogle,
+        loginWithGitHub,
         resetPassword,
       }}
     >

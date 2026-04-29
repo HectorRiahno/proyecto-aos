@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, User, LogIn, Eye, EyeOff, Hospital } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
+import { FaGithub } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,7 +13,8 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(''); 
+  const [error, setError] = useState('');
+  const [githubConflict, setGithubConflict] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,7 +56,7 @@ function LoginPage() {
   };
 
 // Google Login
-const { loginWithGoogle } = useAuth();
+const { loginWithGoogle, loginWithGitHub } = useAuth();
 
 const handleGoogleLogin = async () => {
   try {
@@ -63,6 +65,21 @@ const handleGoogleLogin = async () => {
   } catch (error) {
     console.log(error);
     setError('Error al iniciar con Google');
+  }
+};
+
+const handleGitHubLogin = async () => {
+  setGithubConflict(false);
+  setError('');
+  try {
+    await loginWithGitHub();
+    navigate('/Home');
+  } catch (error) {
+    if (error.message?.includes('ya está registrado')) {
+      setGithubConflict(true);
+    } else {
+      setError(error.message || 'Error al iniciar con GitHub');
+    }
   }
 };
 
@@ -80,6 +97,23 @@ const handleGoogleLogin = async () => {
             Accede al sistema con tus credenciales
           </p>
         </div>
+
+        {/* Conflicto de cuenta GitHub */}
+        {githubConflict && (
+          <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 mb-3 text-sm">
+            <p className="text-amber-800 font-medium mb-1">⚠️ Correo ya registrado</p>
+            <p className="text-amber-700 mb-2">
+              Tu correo ya tiene cuenta con Google. Inicia sesión con Google para vincular GitHub automáticamente.
+            </p>
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer"
+            >
+              Iniciar con Google y vincular GitHub
+            </button>
+          </div>
+        )}
 
         {/* Error */}
         {error && (
@@ -144,6 +178,15 @@ const handleGoogleLogin = async () => {
           >
             <FcGoogle className="w-5 h-5" />
             Continuar con Google
+          </button>
+
+          <button
+            type="button"
+            onClick={handleGitHubLogin}
+            className="w-full flex items-center justify-center gap-3 border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition font-medium cursor-pointer"
+          >
+            <FaGithub className="w-5 h-5 text-gray-800" />
+            Continuar con GitHub
           </button>
 
           {/* Links */}
