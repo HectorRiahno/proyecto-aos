@@ -12,6 +12,9 @@ import Home from '../pages/Home'
 // Sesiones
 import SessionsPage from '../pages/SessionsPage'
 
+// Usuarios
+import UsersPage from '../pages/UsersPage'
+
 // Playground Home
 import HomeHooks from '../playground/HomeHooks'
 
@@ -51,6 +54,9 @@ function AppRouter() {
 
       {/* sesiones */}
       <Route path="/sessions" element={<SessionsPage />} />
+
+      {/* usuarios */}
+      <Route path="/users" element={<UsersPage />} />
 
       {/* Playground */}
       <Route path="/playground" element={<HomeHooks />} />
