@@ -12,6 +12,7 @@ import {
   confirmPasswordReset,
   linkWithCredential,
   fetchSignInMethodsForEmail,
+  updateProfile,
 } from "firebase/auth";
 
 import { auth, db } from "../firebase";
@@ -89,6 +90,7 @@ export function AuthProvider({ children }) {
       document: userData.document || "",
       loginMethod: "correo",
       loginMethods: arrayUnion("correo"),
+      photoURL: userData.photoURL || "",
       role: "user",
       status: "activo",
       createdAt: new Date(),
@@ -96,16 +98,27 @@ export function AuthProvider({ children }) {
     });
 
     // Registrar sesión
-    await createSessionRecord(email, userData.username || "", "correo", "");
+    await createSessionRecord(email, userData.username || "", "correo", userData.photoURL || "");
 
     return userCredential;
   };
 
   const login = async (email, password) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const { user } = userCredential;
 
-    // Registrar sesión
-    await createSessionRecord(email, userCredential.user.displayName || "", "correo", "");
+    // Obtener datos del usuario desde Firestore para el registro de sesión
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    const userData = userSnap.exists() ? userSnap.data() : {};
+
+    // Registrar sesión con datos completos
+    await createSessionRecord(
+      email, 
+      userData.username || user.displayName || "", 
+      "correo", 
+      userData.photoURL || user.photoURL || ""
+    );
 
     return userCredential;
   };
@@ -329,8 +342,30 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    const unsuscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsuscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        // Obtener datos adicionales de Firestore
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          // Mergear datos de Firestore en el objeto de usuario
+          // Usamos un objeto nuevo para evitar problemas con las propiedades read-only de currentUser
+          const enhancedUser = {
+            ...currentUser,
+            username: userData.username,
+            photoURL: userData.photoURL || currentUser.photoURL,
+            role: userData.role,
+            telephone: userData.telephone,
+          };
+          setUser(enhancedUser);
+        } else {
+          setUser(currentUser);
+        }
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
