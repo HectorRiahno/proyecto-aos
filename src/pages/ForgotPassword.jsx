@@ -1,22 +1,37 @@
 import React, { useState } from 'react';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function ForgotPage() {
+  const { resetPassword } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [touched, setTouched] = useState(false);
-
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
   const isValidEmail = /\S+@\S+\.\S+/.test(email);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setMessage('');
 
     if (!isValidEmail) return;
 
-    alert(`Se enviaron instrucciones a: ${email}`);
-    navigate('/reset');
+    try {
+      await resetPassword(email);
+      setMessage(`Se enviaron instrucciones a: ${email}. Revisa tu bandeja de entrada.`);
+      // No navegamos de inmediato para que el usuario pueda leer el mensaje
+    } catch (error) {
+      console.error(error);
+      if (error.code === 'auth/user-not-found') {
+        setError('No existe un usuario con este correo.');
+      } else {
+        setError('Ocurrió un error al enviar el correo. Inténtalo de nuevo.');
+      }
+    }
   };
 
   return (
@@ -33,6 +48,18 @@ function ForgotPage() {
             Ingresa tu correo registrado
           </p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 text-xs rounded text-center">
+            {error}
+          </div>
+        )}
+
+        {message && (
+          <div className="mb-4 p-2 bg-green-100 border border-green-400 text-green-700 text-xs rounded text-center">
+            {message}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           
@@ -75,7 +102,6 @@ function ForgotPage() {
          
           <button
             type="submit"
-            onClick={() => navigate('/reset')}
             disabled={!isValidEmail}
             className={`w-full py-2 rounded text-white transition
               ${isValidEmail

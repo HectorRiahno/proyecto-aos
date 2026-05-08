@@ -9,6 +9,7 @@ import {
   FacebookAuthProvider,
   signInWithPopup,
   sendPasswordResetEmail,
+  confirmPasswordReset,
   linkWithCredential,
   fetchSignInMethodsForEmail,
 } from "firebase/auth";
@@ -323,6 +324,10 @@ export function AuthProvider({ children }) {
     return sendPasswordResetEmail(auth, email);
   };
 
+  const confirmThePasswordReset = (oobCode, newPassword) => {
+    return confirmPasswordReset(auth, oobCode, newPassword);
+  };
+
   useEffect(() => {
     const unsuscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -344,6 +349,7 @@ export function AuthProvider({ children }) {
         loginWithGitHub,
         loginWithFacebook,
         resetPassword,
+        confirmThePasswordReset,
       }}
     >
       {children}
