@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, User, LogIn, Eye, EyeOff, Hospital } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
-import { FaGithub } from 'react-icons/fa';
+import { FaGithub, FaFacebook } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -56,7 +56,7 @@ function LoginPage() {
   };
 
 // Google Login
-const { loginWithGoogle, loginWithGitHub } = useAuth();
+const { loginWithGoogle, loginWithGitHub, loginWithFacebook } = useAuth();
 
 const handleGoogleLogin = async () => {
   try {
@@ -83,6 +83,17 @@ const handleGitHubLogin = async () => {
   }
 };
 
+const handleFacebookLogin = async () => {
+  setError('');
+  try {
+    await loginWithFacebook();
+    navigate('/Home');
+  } catch (error) {
+    console.log(error);
+    setError(error.message || 'Error al iniciar con Facebook');
+  }
+};
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-sm bg-white rounded-lg shadow-lg p-6">
@@ -98,7 +109,6 @@ const handleGitHubLogin = async () => {
           </p>
         </div>
 
-        {/* Conflicto de cuenta GitHub */}
         {githubConflict && (
           <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 mb-3 text-sm">
             <p className="text-amber-800 font-medium mb-1">⚠️ Correo ya registrado</p>
@@ -115,15 +125,12 @@ const handleGitHubLogin = async () => {
           </div>
         )}
 
-        {/* Error */}
         {error && (
           <p className="text-red-500 text-sm text-center mb-3">{error}</p>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
 
-          {/* Email */}
           <div>
             <label className="text-sm text-gray-600">Email</label>
             <div className="mt-1 relative">
@@ -138,7 +145,6 @@ const handleGitHubLogin = async () => {
             </div>
           </div>
 
-          {/* Password */}
           <div>
             <label className="text-sm text-gray-600">Contraseña</label>
             <div className="mt-1 relative">
@@ -161,7 +167,6 @@ const handleGitHubLogin = async () => {
             </div>
           </div>
 
-          {/* Button */}
           <button
             type="submit"
             disabled={loading}
@@ -189,7 +194,15 @@ const handleGitHubLogin = async () => {
             Continuar con GitHub
           </button>
 
-          {/* Links */}
+          <button
+            type="button"
+            onClick={handleFacebookLogin}
+            className="w-full flex items-center justify-center gap-3 border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition font-medium cursor-pointer"
+          >
+            <FaFacebook className="w-5 h-5 text-blue-600" />
+            Continuar con Facebook
+          </button>
+          
           <div className="text-center space-y-2">
             <button
               type="button"
