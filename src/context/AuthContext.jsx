@@ -334,7 +334,11 @@ export function AuthProvider({ children }) {
   };
 
   const resetPassword = (email) => {
-    return sendPasswordResetEmail(auth, email);
+    const actionCodeSettings = {
+      url: window.location.origin + "/reset", 
+      handleCodeInApp: true,
+    };
+    return sendPasswordResetEmail(auth, email, actionCodeSettings);
   };
 
   const confirmThePasswordReset = (oobCode, newPassword) => {
