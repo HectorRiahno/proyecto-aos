@@ -1,17 +1,29 @@
-import React, { useState } from 'react';
-import { Lock, Eye, EyeOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function ResetPage() {
+  const { confirmThePasswordReset } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const oobCode = searchParams.get('oobCode');
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [touched, setTouched] = useState({
     password: false,
     confirmPassword: false,
   });
+
+  useEffect(() => {
+    if (!oobCode) {
+      setError('El enlace de restablecimiento es inválido o ha expirado.');
+    }
+  }, [oobCode]);
 
   // Reglas de validación
   const hasMinLength = password.length >= 8;
@@ -21,15 +33,32 @@ function ResetPage() {
   const isValidPassword = hasMinLength && hasUppercase && hasSpecialChar;
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
 
-  const isFormValid = isValidPassword && passwordsMatch;
+  const isFormValid = isValidPassword && passwordsMatch && oobCode && !loading;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!isFormValid) return;
 
-    alert('Contraseña actualizada correctamente');
-    navigate('/');
+    setLoading(true);
+    setError('');
+
+    try {
+      await confirmThePasswordReset(oobCode, password);
+      alert('Contraseña actualizada correctamente. Ahora puedes iniciar sesión.');
+      navigate('/');
+    } catch (error) {
+      console.error(error);
+      if (error.code === 'auth/expired-action-code') {
+        setError('El enlace ha expirado. Por favor, solicita uno nuevo.');
+      } else if (error.code === 'auth/invalid-action-code') {
+        setError('El enlace es inválido. Por favor, solicita uno nuevo.');
+      } else {
+        setError('Ocurrió un error al restablecer la contraseña.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,6 +76,13 @@ function ResetPage() {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 text-xs rounded flex items-center gap-2">
+            <AlertCircle size={16} />
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
 
           {/* Nueva contraseña */}
@@ -56,6 +92,7 @@ function ResetPage() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
+                disabled={!oobCode || loading}
                 onChange={(e) => setPassword(e.target.value)}
                 onBlur={() => setTouched({ ...touched, password: true })}
                 className={`w-full p-2 border rounded focus:outline-none focus:ring-2 pl-10 pr-10
@@ -101,6 +138,7 @@ function ResetPage() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
+                disabled={!oobCode || loading}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 onBlur={() => setTouched({ ...touched, confirmPassword: true })}
                 className={`w-full p-2 border rounded focus:outline-none focus:ring-2 pl-10
@@ -138,7 +176,7 @@ function ResetPage() {
                 : 'bg-gray-400 cursor-not-allowed'
               }`}
           >
-            Guardar nueva contraseña
+            {loading ? 'Actualizando...' : 'Guardar nueva contraseña'}
           </button>
         </form>
       </div>
