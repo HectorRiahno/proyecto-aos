@@ -73,6 +73,14 @@ const confirmThePasswordReset = (oobCode, newPassword) => {
 - Finaliza la sesión en Firebase.
 - Actualiza el registro de la sesión en Firestore, marcando el `logoutTime` y cambiando el estado a "finalizada".
 
+## Configuración de URL Personalizada
+El sistema está configurado para redirigir al usuario a la página local `/reset` en lugar de la página por defecto de Firebase. 
+
+**Requisitos en Firebase Console:**
+1. Ve a **Authentication > Settings > Authorized domains**.
+2. Añade tu dominio local (ej: `http://localhost:5173`) o el de producción a la lista.
+3. De lo contrario, Firebase bloqueará la redirección por seguridad.
+
 ## Archivos Relacionados
 - `src/context/AuthContext.jsx`: Contiene las funciones core (`signup`, `login`, `resetPassword`, `confirmThePasswordReset`).
 - `src/pages/RegisterPage.jsx`: Interfaz de registro.
