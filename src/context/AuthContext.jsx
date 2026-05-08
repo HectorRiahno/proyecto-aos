@@ -6,6 +6,7 @@ import {
   signOut,
   GoogleAuthProvider,
   GithubAuthProvider,
+  FacebookAuthProvider,
   signInWithPopup,
   sendPasswordResetEmail,
   linkWithCredential,
@@ -252,6 +253,72 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginWithFacebook = async () => {
+    const facebookProvider = new FacebookAuthProvider();
+    try {
+      const userCredential = await signInWithPopup(auth, facebookProvider);
+      const { user } = userCredential;
+
+      // Guardar datos del usuario en Firestore
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      const userDataToSave = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || "",
+        photoURL: user.photoURL || "",
+        username: user.displayName || "",
+        loginMethods: arrayUnion("facebook"),
+        updatedAt: new Date(),
+      };
+
+      if (!userSnap.exists()) {
+        userDataToSave.role = "user";
+        userDataToSave.status = "activo";
+        userDataToSave.createdAt = new Date();
+      }
+
+      await setDoc(userRef, userDataToSave, { merge: true });
+
+      // Registrar sesión
+      await createSessionRecord(
+        user.email,
+        user.displayName || "",
+        "facebook",
+        user.photoURL || ""
+      );
+
+      return userCredential;
+    } catch (error) {
+      // El correo ya existe con otro proveedor
+      if (error.code === "auth/account-exists-with-different-credential") {
+        const email = error.customData?.email;
+        
+        let providerNames = "";
+        try {
+          const methods = await fetchSignInMethodsForEmail(auth, email);
+          providerNames = methods.map(m => {
+            if (m === "google.com") return "Google";
+            if (m === "password") return "correo y contraseña";
+            if (m === "github.com") return "GitHub";
+            if (m === "facebook.com") return "Facebook";
+            return m;
+          }).join(", ");
+        } catch (_) { }
+
+        const providerMsg = providerNames
+          ? `con: ${providerNames}`
+          : "con otro proveedor";
+
+        throw new Error(
+          `Este correo ya está registrado ${providerMsg}. Inicia sesión con ese proveedor primero.`
+        );
+      }
+      throw error;
+    }
+  };
+
   const resetPassword = (email) => {
     return sendPasswordResetEmail(auth, email);
   };
@@ -275,6 +342,7 @@ export function AuthProvider({ children }) {
         loading,
         loginWithGoogle,
         loginWithGitHub,
+        loginWithFacebook,
         resetPassword,
       }}
     >
