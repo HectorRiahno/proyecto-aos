@@ -4,7 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from '../pages/LoginPage'
 import RegisterPage from '../pages/RegisterPage'
 import ForgotPage from '../pages/ForgotPassword'
-import ResetPage from '../pages/ResestPassword'
+import ResetPage from '../pages/ResetPassword'
 
 //Home
 import Home from '../pages/Home'
