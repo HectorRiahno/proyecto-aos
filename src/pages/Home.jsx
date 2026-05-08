@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { LogIn, Hospital } from "lucide-react";
@@ -6,6 +7,12 @@ function Home() {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
 
+  // Redirigir si no hay usuario autenticado
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/");
+    }
+  }, [user, loading, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -23,7 +30,7 @@ function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-50">
       
       <header className="bg-white border-b border-gray-300 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -35,10 +42,10 @@ function Home() {
 
         <div className="flex items-center gap-4">
           <span className="text-slate-600 hidden sm:block">
-            {user.email}
+            {user?.email}
           </span>
 
-          {user.photoURL ? (
+          {user?.photoURL ? (
             <img
               src={user.photoURL}
               alt="usuario"
@@ -94,14 +101,21 @@ function Home() {
             </p>
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-gray-300 hover:border-gray-500 transition cursor-pointer" >
+          <div className="bg-white p-5 rounded-xl border border-gray-300 hover:border-gray-500 transition cursor-pointer" onClick={() => navigate('/users')}>
+            <h3 className="text-lg font-semibold text-slate-700">
+              Usuarios
+            </h3>
+            <p className="text-slate-500 text-sm mt-2">
+              Gestionar las cuentas y perfiles de los usuarios.
+            </p>
+          </div>
+
+          <div className="bg-white p-5 rounded-xl border border-gray-300 hover:border-gray-500 transition cursor-pointer" onClick={() => navigate('/sessions')}>
             <h3 className="text-lg font-semibold text-slate-700">
               Sesiones
             </h3>
             <p className="text-slate-500 text-sm mt-2">
-              Ver el historial de sesiones de los usuarios. <a href="/sessions" className="text-blue-500 hover:underline">
-                haz clic aquí
-              </a>
+              Ver el historial de sesiones de los usuarios.
             </p>
           </div>
 

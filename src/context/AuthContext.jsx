@@ -13,7 +13,7 @@ import {
 } from "firebase/auth";
 
 import { auth, db } from "../firebase";
-import { doc, setDoc, addDoc, collection, updateDoc } from "firebase/firestore";
+import { doc, setDoc, addDoc, collection, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 
 export const AuthContext = createContext();
 
@@ -85,6 +85,10 @@ export function AuthProvider({ children }) {
       username: userData.username || "",
       telephone: userData.telephone || "",
       document: userData.document || "",
+      loginMethod: "correo",
+      loginMethods: arrayUnion("correo"),
+      role: "user",
+      status: "activo",
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -115,22 +119,27 @@ export function AuthProvider({ children }) {
     const googleProvider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, googleProvider);
 
-    // Guardar datos del usuario en Firestore si es la primera vez
-    await setDoc(
-      doc(db, "users", userCredential.user.uid),
-      {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        displayName: userCredential.user.displayName || "",
-        photoURL: userCredential.user.photoURL || "",
-        username: userCredential.user.displayName || "",
-        telephone: "",
-        document: "",
-        loginMethod: "google",
-        updatedAt: new Date(),
-      },
-      { merge: true }
-    );
+    // Guardar datos del usuario en Firestore (solo campos por defecto si es nuevo)
+    const userRef = doc(db, "users", userCredential.user.uid);
+    const userSnap = await getDoc(userRef);
+
+    const userDataToSave = {
+      uid: userCredential.user.uid,
+      email: userCredential.user.email,
+      displayName: userCredential.user.displayName || "",
+      photoURL: userCredential.user.photoURL || "",
+      username: userCredential.user.displayName || "",
+      loginMethods: arrayUnion("google"),
+      updatedAt: new Date(),
+    };
+
+    if (!userSnap.exists()) {
+      userDataToSave.role = "user";
+      userDataToSave.status = "activo";
+      userDataToSave.createdAt = new Date();
+    }
+
+    await setDoc(userRef, userDataToSave, { merge: true });
 
     // Registrar sesión con Google
     await createSessionRecord(
@@ -172,21 +181,26 @@ export function AuthProvider({ children }) {
       const { user } = userCredential;
 
       // Guardar datos del usuario en Firestore
-      await setDoc(
-        doc(db, "users", user.uid),
-        {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName || "",
-          photoURL: user.photoURL || "",
-          username: user.displayName || "",
-          telephone: "",
-          document: "",
-          loginMethod: "github",
-          updatedAt: new Date(),
-        },
-        { merge: true }
-      );
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      const userDataToSave = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || "",
+        photoURL: user.photoURL || "",
+        username: user.displayName || "",
+        loginMethods: arrayUnion("github"),
+        updatedAt: new Date(),
+      };
+
+      if (!userSnap.exists()) {
+        userDataToSave.role = "user";
+        userDataToSave.status = "activo";
+        userDataToSave.createdAt = new Date();
+      }
+
+      await setDoc(userRef, userDataToSave, { merge: true });
 
       // Registrar sesión — misma foto/nombre sin importar el proveedor
       await createSessionRecord(
