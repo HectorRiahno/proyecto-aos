@@ -41,9 +41,14 @@ function Home() {
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="text-slate-600 hidden sm:block">
-            {user?.email}
-          </span>
+          <div className="flex flex-col items-end hidden sm:flex">
+            <span className="text-slate-800 font-semibold text-sm">
+              {user?.username || user?.displayName || 'Usuario'}
+            </span>
+            <span className="text-slate-500 text-xs">
+              {user?.email}
+            </span>
+          </div>
 
           {user?.photoURL ? (
             <img
@@ -69,7 +74,7 @@ function Home() {
 
       <main className="p-6">
         <h2 className="text-2xl font-semibold text-slate-700 mb-6">
-          Bienvenido 👋
+          Bienvenido, {user?.username || user?.displayName || 'Usuario'} 👋
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
