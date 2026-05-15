@@ -3,132 +3,116 @@ import { Lock, User, LogIn, Eye, EyeOff, Hospital } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub, FaFacebook } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, LINK_NEEDED_TAG } from '../context/AuthContext';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle, loginWithGitHub, loginWithFacebook } = useAuth();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail]               = useState('');
+  const [password, setPassword]         = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [githubConflict, setGithubConflict] = useState(false);
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState('');
+  const [isLinkError, setIsLinkError]   = useState(false);
+
+  /** Normaliza cualquier error: detecta si requiere vinculación */
+  const handleAuthError = (err) => {
+    if (err.message?.startsWith(LINK_NEEDED_TAG)) {
+      setIsLinkError(true);
+      setError(err.message.replace(LINK_NEEDED_TAG, '').trim());
+    } else {
+      setIsLinkError(false);
+      setError(err.message || 'Error al iniciar sesión');
+    }
+  };
+
+  const resetErrors = () => { setError(''); setIsLinkError(false); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validación mínima (solo campos vacíos)
-    if (!email || !password) {
-      return setError('Todos los campos son obligatorios');
-    }
-
-    setError('');
-    setLoading(true); 
-
+    if (!email || !password) return setError('Todos los campos son obligatorios');
+    resetErrors();
+    setLoading(true);
     try {
       await login(email, password);
-      navigate('/Home'); 
+      navigate('/Home');
     } catch (err) {
-      console.log(err);
-
-      //  manejo de errores con firebase 
-      switch (err.code) {
-        case 'auth/user-not-found':
-          setError('El usuario no existe');
-          break;
-        case 'auth/wrong-password':
-          setError('Contraseña incorrecta');
-          break;
-        case 'auth/invalid-email':
-          setError('Email inválido');
-          break;
-        case 'auth/too-many-requests':
-          setError('Demasiados intentos. Intenta más tarde');
-          break;
-        default:
-          setError('Error al iniciar sesión');
-      }
+      const msgs = {
+        'auth/user-not-found':    'El usuario no existe',
+        'auth/wrong-password':    'Contraseña incorrecta',
+        'auth/invalid-email':     'Email inválido',
+        'auth/too-many-requests': 'Demasiados intentos. Intenta más tarde',
+        'auth/invalid-credential':'Credenciales incorrectas',
+      };
+      setError(msgs[err.code] || err.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
   };
 
-// Google Login
-const { loginWithGoogle, loginWithGitHub, loginWithFacebook } = useAuth();
+  const handleGoogleLogin = async () => {
+    resetErrors();
+    setLoading(true);
+    try {
+      await loginWithGoogle();
+      navigate('/Home');
+    } catch (err) { handleAuthError(err); }
+    finally { setLoading(false); }
+  };
 
-const handleGoogleLogin = async () => {
-  try {
-    await loginWithGoogle();
-    navigate('/Home');
-  } catch (error) {
-    console.log(error);
-    setError('Error al iniciar con Google');
-  }
-};
+  const handleGitHubLogin = async () => {
+    resetErrors();
+    setLoading(true);
+    try {
+      await loginWithGitHub();
+      navigate('/Home');
+    } catch (err) { handleAuthError(err); }
+    finally { setLoading(false); }
+  };
 
-const handleGitHubLogin = async () => {
-  setGithubConflict(false);
-  setError('');
-  try {
-    await loginWithGitHub();
-    navigate('/Home');
-  } catch (error) {
-    if (error.message?.includes('ya está registrado')) {
-      setGithubConflict(true);
-    } else {
-      setError(error.message || 'Error al iniciar con GitHub');
-    }
-  }
-};
-
-const handleFacebookLogin = async () => {
-  setError('');
-  try {
-    await loginWithFacebook();
-    navigate('/Home');
-  } catch (error) {
-    console.log(error);
-    setError(error.message || 'Error al iniciar con Facebook');
-  }
-};
+  const handleFacebookLogin = async () => {
+    resetErrors();
+    setLoading(true);
+    try {
+      await loginWithFacebook();
+      navigate('/Home');
+    } catch (err) { handleAuthError(err); }
+    finally { setLoading(false); }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-sm bg-white rounded-lg shadow-lg p-6">
+      <div className="w-full max-w-sm bg-white rounded-xl shadow-lg p-6">
 
         {/* Header */}
-        <div className="flex flex-col items-center mb-4">
+        <div className="flex flex-col items-center mb-5">
           <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white mb-3">
             <Hospital size={28} />
           </div>
-          <h3 className="text-lg font-semibold">HospitalIS PRO</h3>
-          <p className="text-sm text-gray-500">
-            Accede al sistema con tus credenciales
-          </p>
+          <h3 className="text-lg font-semibold text-gray-800">HospitalIS PRO</h3>
+          <p className="text-sm text-gray-500">Accede al sistema con tus credenciales</p>
         </div>
 
-        {githubConflict && (
-          <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 mb-3 text-sm">
-            <p className="text-amber-800 font-medium mb-1">⚠️ Correo ya registrado</p>
-            <p className="text-amber-700 mb-2">
-              Tu correo ya tiene cuenta con Google. Inicia sesión con Google para vincular GitHub automáticamente.
+        {/* ── Banner de vinculación (Solo informativo) ─────────────────── */}
+        {isLinkError && (
+          <div className="mb-4 border border-amber-300 bg-amber-50 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-amber-600 text-base">⚠️</span>
+              <p className="text-amber-800 text-sm font-bold">Email ya registrado</p>
+            </div>
+            <p className="text-amber-700 text-xs leading-relaxed">
+              {error}
             </p>
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer"
-            >
-              Iniciar con Google y vincular GitHub
-            </button>
           </div>
         )}
 
-        {error && (
+        {/* Error simple (sin vinculación) */}
+        {error && !isLinkError && (
           <p className="text-red-500 text-sm text-center mb-3">{error}</p>
         )}
 
+        {/* ── Formulario ──────────────────────────────────────────────────── */}
         <form onSubmit={handleSubmit} className="space-y-4">
 
           <div>
@@ -156,7 +140,6 @@ const handleFacebookLogin = async () => {
                 placeholder="Contraseña"
               />
               <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -170,40 +153,47 @@ const handleFacebookLogin = async () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-blue-400 cursor-pointer disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 cursor-pointer disabled:cursor-not-allowed font-medium transition"
           >
             <LogIn className="w-4 h-4" />
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
 
+          {/* Separador */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400">o continúa con</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition font-medium cursor-pointer"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition font-medium cursor-pointer text-sm"
           >
-            <FcGoogle className="w-5 h-5" />
-            Continuar con Google
+            <FcGoogle className="w-5 h-5" /> Continuar con Google
           </button>
 
           <button
             type="button"
             onClick={handleGitHubLogin}
-            className="w-full flex items-center justify-center gap-3 border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition font-medium cursor-pointer"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition font-medium cursor-pointer text-sm"
           >
-            <FaGithub className="w-5 h-5 text-gray-800" />
-            Continuar con GitHub
+            <FaGithub className="w-5 h-5 text-gray-800" /> Continuar con GitHub
           </button>
 
           <button
             type="button"
             onClick={handleFacebookLogin}
-            className="w-full flex items-center justify-center gap-3 border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition font-medium cursor-pointer"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition font-medium cursor-pointer text-sm"
           >
-            <FaFacebook className="w-5 h-5 text-blue-600" />
-            Continuar con Facebook
+            <FaFacebook className="w-5 h-5 text-blue-600" /> Continuar con Facebook
           </button>
           
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-2 pt-2">
             <button
               type="button"
               onClick={() => navigate('/forgot')}
@@ -211,7 +201,7 @@ const handleFacebookLogin = async () => {
             >
               Recuperar contraseña
             </button>
-
+            <br />
             <button
               type="button"
               onClick={() => navigate('/register')}

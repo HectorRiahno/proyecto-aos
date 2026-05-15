@@ -4,7 +4,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { LogOut, LogIn, Search, Mail, Hospital } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-import { FaGithub } from "react-icons/fa";
+import { FaGithub, FaFacebook } from "react-icons/fa";
 
 function SessionsPage() {
   const navigate = useNavigate();
@@ -215,6 +215,8 @@ function SessionsPage() {
                           <FcGoogle className="w-3.5 h-3.5" />
                         ) : session.provider === 'github' ? (
                           <FaGithub className="w-3.5 h-3.5" />
+                        ) : session.provider === 'facebook' ? (
+                          <FaFacebook className="w-3.5 h-3.5 text-blue-600" />
                         ) : (
                           <Mail className="w-3.5 h-3.5" />
                         )}
