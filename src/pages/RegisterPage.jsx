@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { User, Lock, Eye, EyeOff, Mail, Phone, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { LINK_NEEDED_TAG } from "../context/AuthContext";
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -56,7 +57,6 @@ function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const validationErrors = validate();
 
     if (Object.keys(validationErrors).length > 0) {
@@ -68,22 +68,12 @@ function RegisterPage() {
     setLoading(true);
 
     try {
-      await signup(email, password, {
-        username,
-        telephone,
-        document,
-      });
+      await signup(email, password, { username, telephone, document });
       navigate('/');
     } catch (error) {
-      let errorMessage = 'Error al registrarse';
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'El email ya está registrado';
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'La contraseña es muy débil';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Email inválido';
-      }
-      setErrors({ general: errorMessage });
+      // Mostrar el mensaje limpio (sin el tag interno)
+      const msg = (error.message || 'Error al registrarse').replace(LINK_NEEDED_TAG, '').trim();
+      setErrors({ general: msg, isLinkError: error.message?.startsWith(LINK_NEEDED_TAG) });
     } finally {
       setLoading(false);
     }
@@ -92,147 +82,72 @@ function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-sm bg-white rounded-lg shadow-lg p-6">
-        
-        {/* Header */}
         <div className="flex flex-col items-center mb-4">
           <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white mb-3">
             <UserPlus className="w-6 h-6" />
           </div>
           <h3 className="text-lg font-semibold">Registro</h3>
-          <p className="text-sm text-gray-500">
-            Crea tu cuenta para continuar
-          </p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* Teléfono */}
-          <div>
-            <label className="text-sm text-gray-600">Teléfono</label>
-            <div className="mt-1 relative">
-              <input
-                value={telephone}
-                onChange={(e) => setTelephone(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
-                placeholder="Número de teléfono"
-              />
-              <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-sm text-gray-600">Teléfono</label>
+              <input value={telephone} onChange={(e) => setTelephone(e.target.value)} className="w-full p-2 border border-gray-300 rounded" placeholder="Teléfono" />
+              {errors.telephone && <p className="text-red-500 text-xs">{errors.telephone}</p>}
             </div>
-            {errors.telephone && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.telephone}
-              </p>
-            )}
-          </div>
-
-          {/* Documento */}
-          <div>
-            <label className="text-sm text-gray-600">Documento</label>
-            <div className="mt-1 relative">
-              <input
-                value={document}
-                onChange={(e) => setDocument(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
-                placeholder="Número de documento"
-              />
-              <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+            <div>
+              <label className="text-sm text-gray-600">Documento</label>
+              <input value={document} onChange={(e) => setDocument(e.target.value)} className="w-full p-2 border border-gray-300 rounded" placeholder="Documento" />
+              {errors.document && <p className="text-red-500 text-xs">{errors.document}</p>}
             </div>
-            {errors.document && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.document}
-              </p>
-            )}
-          </div>
-
-          {/* Usuario */}
-          <div>
-            <label className="text-sm text-gray-600">Usuario</label>
-            <div className="mt-1 relative">
-              <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
-                placeholder="Usuario"
-              />
-              <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+            <div>
+              <label className="text-sm text-gray-600">Usuario</label>
+              <input value={username} onChange={(e) => setUsername(e.target.value)} className="w-full p-2 border border-gray-300 rounded" placeholder="Usuario" />
+              {errors.username && <p className="text-red-500 text-xs">{errors.username}</p>}
             </div>
-            {errors.username && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.username}
-              </p>
-            )}
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="text-sm text-gray-600">Email</label>
-            <div className="mt-1 relative">
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
-                placeholder="Correo electrónico"
-              />
-              <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+            <div>
+              <label className="text-sm text-gray-600">Email</label>
+              <input value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-2 border border-gray-300 rounded" placeholder="Email" />
+              {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
             </div>
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.email}
-              </p>
-            )}
-          </div>
+            <div>
+              <label className="text-sm text-gray-600">Contraseña</label>
+              <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-2 border border-gray-300 rounded" placeholder="Contraseña" />
+              {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
+            </div>
 
-          {/* Contraseña */}
-          <div>
-            <label className="text-sm text-gray-600">Contraseña</label>
-            <div className="mt-1 relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10 pr-10"
-                placeholder="Contraseña"
-              />
-              <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            {/* Error simple */}
+            {errors.general && !errors.isLinkError && (
+              <p className="text-red-500 text-sm text-center">{errors.general}</p>
+            )}
+
+            {/* Banner de vinculación — mismo estilo que LoginPage */}
+            {errors.isLinkError && (
+              <div className="border border-amber-300 bg-amber-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-amber-600 text-base">⚠️</span>
+                  <p className="text-amber-800 text-sm font-semibold">Correo ya registrado</p>
+                </div>
+                <p className="text-amber-700 text-xs mb-3 leading-relaxed">{errors.general}</p>
+                <button
+                  type="button"
+                  onClick={() => navigate("/")}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer"
+                >
+                  Ir al login para vincular →
+                </button>
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer disabled:bg-blue-400 disabled:cursor-not-allowed">
+              <UserPlus className="w-4 h-4" /> {loading ? 'Registrando...' : 'Registrarse'}
+            </button>
+            <div className="text-center">
+              <button type="button" onClick={() => navigate("/")} className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
+                ¿Ya tienes cuenta? Inicia sesión
               </button>
             </div>
-            {errors.password && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.password}
-              </p>
-            )}
-          </div>
-
-          {/* Mensaje de error general */}
-          {errors.general && <p className="text-red-500 text-sm text-center">{errors.general}</p>}
-
-          {/* Botón */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer disabled:bg-blue-400 disabled:cursor-not-allowed"
-          >
-            <UserPlus className="w-4 h-4" /> {loading ? 'Registrando...' : 'Registrarse'}
-          </button>
-
-          {/* Navegación */}
-          <div className="text-center space-y-2">
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer"
-            >
-              ¿Ya tienes cuenta? Inicia sesión
-            </button>
-          </div>
-        </form>
+          </form>
       </div>
     </div>
   );

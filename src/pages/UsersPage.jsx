@@ -4,7 +4,7 @@ import { collection, onSnapshot, doc, deleteDoc, updateDoc, addDoc } from "fireb
 import { db } from "../firebase";
 import { Search, User, Mail, Hospital, Phone, CreditCard, Calendar, Edit2, Trash2, Plus, X, Shield, UserCheck, UserMinus } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-import { FaGithub } from "react-icons/fa";
+import { FaGithub, FaFacebook } from "react-icons/fa";
 
 function UsersPage() {
   const navigate = useNavigate();
@@ -88,10 +88,11 @@ function UsersPage() {
   // Funciones de estilo heredadas de Historial
   const getProviderColor = (provider) => {
     const colors = {
-      correo: "bg-blue-50 text-blue-700 border-blue-200",
-      google: "bg-red-50 text-red-700 border-red-200",
-      github: "bg-slate-100 text-slate-700 border-slate-300",
-      manual: "bg-purple-50 text-purple-700 border-purple-200"
+      correo:   "bg-blue-50 text-blue-700 border-blue-200",
+      google:   "bg-red-50 text-red-700 border-red-200",
+      github:   "bg-slate-100 text-slate-700 border-slate-300",
+      facebook: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      manual:   "bg-purple-50 text-purple-700 border-purple-200"
     };
     return colors[provider] || "bg-gray-50 text-gray-700 border-gray-200";
   };
@@ -305,10 +306,12 @@ function UsersPage() {
                         {/* Priorizar el array de métodos, fallback al método único */}
                         {(u.loginMethods && u.loginMethods.length > 0 ? u.loginMethods : [u.loginMethod || "correo"]).map((method, idx) => (
                           <div key={idx} className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getProviderColor(method)}`}>
-                            {method === 'google' ? (
+                          {method === 'google' ? (
                               <FcGoogle className="w-3 h-3" />
                             ) : method === 'github' ? (
                               <FaGithub className="w-3 h-3" />
+                            ) : method === 'facebook' ? (
+                              <FaFacebook className="w-3 h-3 text-indigo-600" />
                             ) : (
                               <Mail className="w-3 h-3" />
                             )}
