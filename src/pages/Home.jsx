@@ -79,7 +79,7 @@ function Home() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           
-          <div className="bg-white p-5 rounded-xl border border-gray-300 hover:border-gray-500 transition cursor-pointer">
+          <div className="bg-white p-5 rounded-xl border border-gray-300 hover:border-gray-500 transition cursor-pointer" onClick={() => navigate('/patients')}>
             <h3 className="text-lg font-semibold text-slate-700">
               Pacientes
             </h3>
