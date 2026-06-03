@@ -15,6 +15,9 @@ import SessionsPage from '../pages/SessionsPage'
 // Usuarios
 import UsersPage from '../pages/UsersPage'
 
+// Pacientes
+import PatientsPage from '../pages/PatientsPage'
+
 // Playground Home
 import HomeHooks from '../playground/HomeHooks'
 
@@ -57,6 +60,9 @@ function AppRouter() {
 
       {/* usuarios */}
       <Route path="/users" element={<UsersPage />} />
+
+      {/* pacientes */}
+      <Route path="/patients" element={<PatientsPage />} />
 
       {/* Playground */}
       <Route path="/playground" element={<HomeHooks />} />
