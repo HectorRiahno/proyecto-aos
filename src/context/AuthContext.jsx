@@ -181,7 +181,7 @@ export function AuthProvider({ children }) {
         );
       } else if (error.code === "auth/password-does-not-meet-requirements") {
         throw new Error(
-          "La contraseña no cumple los requisitos: debe tener al menos una letra mayúscula, un número y un carácter especial (ej: !, @, #)."
+          "La contraseña no cumple los requisitos de seguridad: mínimo 10 caracteres, una mayúscula, una minúscula, un número y un carácter especial (ej: !, @, #)."
         );
       }
       throw error;
