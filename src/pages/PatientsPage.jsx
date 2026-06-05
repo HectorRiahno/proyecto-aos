@@ -4,8 +4,7 @@ import { collection, onSnapshot, doc, deleteDoc, updateDoc, addDoc } from "fireb
 import { db } from "../firebase";
 import {
   Search, Hospital, Plus, X, Edit2, Trash2,
-  User, Phone, CreditCard, Calendar, MapPin,
-  Droplets, HeartPulse, AlertCircle, UserCheck, UserMinus
+  User, AlertCircle, UserCheck, UserMinus, Droplets, Eye
 } from "lucide-react";
 
 const BLOOD_TYPES = ["A+", "A−", "B+", "B−", "AB+", "AB−", "O+", "O−"];
@@ -44,6 +43,8 @@ function PatientsPage() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [loadingAction, setLoadingAction] = useState(false);
   const [formError, setFormError] = useState("");
+  const [viewingPatient, setViewingPatient] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // { id, name }
 
   useEffect(() => {
     const unsub = onSnapshot(
@@ -160,10 +161,77 @@ function PatientsPage() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.document.trim()) {
-      setFormError("Nombre, apellido y documento son obligatorios.");
+    
+    const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+
+    if (!formData.firstName.trim()) {
+      setFormError("El nombre es obligatorio.");
       return;
     }
+    if (!nameRegex.test(formData.firstName.trim())) {
+      setFormError("El nombre solo debe contener letras.");
+      return;
+    }
+
+    if (!formData.lastName.trim()) {
+      setFormError("El apellido es obligatorio.");
+      return;
+    }
+    if (!nameRegex.test(formData.lastName.trim())) {
+      setFormError("El apellido solo debe contener letras.");
+      return;
+    }
+
+    if (!formData.document.trim()) {
+      setFormError("El documento es obligatorio.");
+      return;
+    }
+    if (!/^\d{5,12}$/.test(formData.document.trim())) {
+      setFormError("El documento debe ser numérico y tener entre 5 y 12 dígitos.");
+      return;
+    }
+
+    if (!formData.birthDate) {
+      setFormError("La fecha de nacimiento es obligatoria.");
+      return;
+    }
+    const birth = new Date(formData.birthDate);
+    const today = new Date();
+    if (birth > today) {
+      setFormError("La fecha de nacimiento no puede estar en el futuro.");
+      return;
+    }
+
+    if (!formData.gender) {
+      setFormError("El género es obligatorio.");
+      return;
+    }
+
+    if (!formData.bloodType) {
+      setFormError("El tipo de sangre es obligatorio.");
+      return;
+    }
+
+    if (formData.phone.trim() && !/^\+?[0-9\s\-]{7,15}$/.test(formData.phone.trim())) {
+      setFormError("El teléfono debe ser un número válido (entre 7 y 15 dígitos).");
+      return;
+    }
+
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setFormError("El correo electrónico no tiene un formato válido.");
+      return;
+    }
+
+    if (formData.emergencyContact.trim() && !nameRegex.test(formData.emergencyContact.trim())) {
+      setFormError("El nombre del contacto de emergencia solo debe contener letras.");
+      return;
+    }
+
+    if (formData.emergencyPhone.trim() && !/^\+?[0-9\s\-]{7,15}$/.test(formData.emergencyPhone.trim())) {
+      setFormError("El teléfono de emergencia debe ser un número válido (entre 7 y 15 dígitos).");
+      return;
+    }
+
     setFormError("");
     setLoadingAction(true);
     try {
@@ -189,12 +257,11 @@ function PatientsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar este paciente?")) return;
     try {
       await deleteDoc(doc(db, "patients", id));
+      setConfirmDelete(null);
     } catch (err) {
       console.error(err);
-      alert("Error al eliminar el paciente.");
     }
   };
 
@@ -322,6 +389,13 @@ function PatientsPage() {
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center gap-2">
                         <button
+                          onClick={() => setViewingPatient(patient)}
+                          title="Ver detalles"
+                          className="p-1.5 text-slate-600 hover:bg-slate-50 rounded-lg transition cursor-pointer"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
                           onClick={() => openEditModal(patient)}
                           title="Editar"
                           className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer"
@@ -329,7 +403,7 @@ function PatientsPage() {
                           <Edit2 size={16} />
                         </button>
                         <button
-                          onClick={() => handleDelete(patient.id)}
+                          onClick={() => setConfirmDelete({ id: patient.id, name: `${patient.firstName} ${patient.lastName}` })}
                           title="Eliminar"
                           className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
                         >
@@ -391,7 +465,7 @@ function PatientsPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-300">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto border border-gray-300">
 
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-xl font-bold text-slate-700">
@@ -410,150 +484,342 @@ function PatientsPage() {
                 </div>
               )}
 
-              <fieldset>
-                <legend className="text-sm font-bold text-slate-600 uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <User size={14} /> Datos Personales
-                </legend>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Nombre <span className="text-red-500">*</span></label>
-                    <input name="firstName" value={formData.firstName} onChange={handleChange} required
-                      placeholder="Juan"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Apellido <span className="text-red-500">*</span></label>
-                    <input name="lastName" value={formData.lastName} onChange={handleChange} required
-                      placeholder="Pérez"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">
-                      <CreditCard size={13} className="inline mr-1" />Documento <span className="text-red-500">*</span>
-                    </label>
-                    <input name="document" value={formData.document} onChange={handleChange} required
-                      placeholder="1234567890"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">
-                      <Calendar size={13} className="inline mr-1" />Fecha de Nacimiento
-                    </label>
-                    <input name="birthDate" type="date" value={formData.birthDate} onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Género</label>
-                    <select name="gender" value={formData.gender} onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700 bg-white cursor-pointer">
-                      <option value="">Seleccionar...</option>
-                      {GENDER_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">
-                      <Droplets size={13} className="inline mr-1" />Tipo de Sangre
-                    </label>
-                    <select name="bloodType" value={formData.bloodType} onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700 bg-white cursor-pointer">
-                      <option value="">Seleccionar...</option>
-                      {BLOOD_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </fieldset>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Columna Izquierda: Datos Personales y Contacto */}
+                <div className="space-y-6">
+                  <fieldset className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
+                    <legend className="text-sm font-bold text-slate-600 uppercase tracking-wide px-2">
+                      Datos Personales
+                    </legend>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">Nombre <span className="text-red-500">*</span></label>
+                        <input name="firstName" value={formData.firstName} onChange={handleChange} required
+                          placeholder="Juan" maxLength={50} pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$" title="Solo se permiten letras y espacios"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">Apellido <span className="text-red-500">*</span></label>
+                        <input name="lastName" value={formData.lastName} onChange={handleChange} required
+                          placeholder="Pérez" maxLength={50} pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$" title="Solo se permiten letras y espacios"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">
+                          Documento <span className="text-red-500">*</span>
+                        </label>
+                        <input name="document" value={formData.document} onChange={handleChange} required
+                          placeholder="1234567890" maxLength={12} pattern="\d{5,12}" title="El documento debe ser numérico y tener entre 5 y 12 dígitos" inputMode="numeric"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">
+                          Fecha de Nacimiento <span className="text-red-500">*</span>
+                        </label>
+                        <input name="birthDate" type="date" value={formData.birthDate} onChange={handleChange} required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">Género <span className="text-red-500">*</span></label>
+                        <select name="gender" value={formData.gender} onChange={handleChange} required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700 bg-white cursor-pointer">
+                          <option value="">Seleccionar...</option>
+                          {GENDER_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">
+                          Tipo de Sangre <span className="text-red-500">*</span>
+                        </label>
+                        <select name="bloodType" value={formData.bloodType} onChange={handleChange} required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700 bg-white cursor-pointer">
+                          <option value="">Seleccionar...</option>
+                          {BLOOD_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </fieldset>
 
-              <fieldset>
-                <legend className="text-sm font-bold text-slate-600 uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <Phone size={14} /> Contacto
-                </legend>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Teléfono</label>
-                    <input name="phone" value={formData.phone} onChange={handleChange}
-                      placeholder="300 000 0000"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
-                    <input name="email" type="email" value={formData.email} onChange={handleChange}
-                      placeholder="paciente@correo.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-slate-600 mb-1">
-                      <MapPin size={13} className="inline mr-1" />Dirección
-                    </label>
-                    <input name="address" value={formData.address} onChange={handleChange}
-                      placeholder="Calle 123 # 45-67, Bogotá"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
-                  </div>
+                  <fieldset className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
+                    <legend className="text-sm font-bold text-slate-600 uppercase tracking-wide px-2">
+                      Contacto
+                    </legend>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">Teléfono</label>
+                        <input name="phone" type="tel" value={formData.phone} onChange={handleChange}
+                          placeholder="300 000 0000" pattern="\+?[0-9\s\-]{7,15}" title="El teléfono debe tener entre 7 y 15 dígitos"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
+                        <input name="email" type="email" value={formData.email} onChange={handleChange}
+                          placeholder="paciente@correo.com" maxLength={100}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-slate-600 mb-1">
+                          Dirección
+                        </label>
+                        <input name="address" value={formData.address} onChange={handleChange}
+                          placeholder="Calle 123 # 45-67, Bogotá"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
+                      </div>
+                    </div>
+                  </fieldset>
                 </div>
-              </fieldset>
 
-              <fieldset>
-                <legend className="text-sm font-bold text-slate-600 uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <HeartPulse size={14} /> Información Médica
-                </legend>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">EPS / Aseguradora</label>
-                    <input name="eps" value={formData.eps} onChange={handleChange}
-                      placeholder="Nueva EPS, Sanitas..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Estado</label>
-                    <select name="status" value={formData.status} onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700 bg-white cursor-pointer">
-                      {STATUS_OPTIONS.map(s => (
-                        <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-slate-600 mb-1">
-                      <AlertCircle size={13} className="inline mr-1" />Alergias conocidas
-                    </label>
-                    <textarea name="allergies" value={formData.allergies} onChange={handleChange} rows={2}
-                      placeholder="Penicilina, látex, mariscos..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700 resize-none" />
-                  </div>
+                {/* Columna Derecha: Información Médica y Contacto de Emergencia */}
+                <div className="space-y-6">
+                  <fieldset className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
+                    <legend className="text-sm font-bold text-slate-600 uppercase tracking-wide px-2">
+                      Información Médica
+                    </legend>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">EPS / Aseguradora</label>
+                        <input name="eps" value={formData.eps} onChange={handleChange}
+                          placeholder="Nueva EPS, Sanitas..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">Estado</label>
+                        <select name="status" value={formData.status} onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700 bg-white cursor-pointer">
+                          {STATUS_OPTIONS.map(s => (
+                            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-slate-600 mb-1">
+                          Alergias conocidas
+                        </label>
+                        <textarea name="allergies" value={formData.allergies} onChange={handleChange} rows={2}
+                          placeholder="Penicilina, látex, mariscos..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700 resize-none" />
+                      </div>
+                    </div>
+                  </fieldset>
+
+                  <fieldset className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
+                    <legend className="text-sm font-bold text-slate-600 uppercase tracking-wide px-2">
+                      Contacto de Emergencia
+                    </legend>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">Nombre</label>
+                        <input name="emergencyContact" value={formData.emergencyContact} onChange={handleChange}
+                          placeholder="María Pérez" maxLength={50} pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$" title="Solo se permiten letras y espacios"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">Teléfono</label>
+                        <input name="emergencyPhone" type="tel" value={formData.emergencyPhone} onChange={handleChange}
+                          placeholder="310 000 0000" pattern="\+?[0-9\s\-]{7,15}" title="El teléfono de emergencia debe tener entre 7 y 15 dígitos"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
+                      </div>
+                    </div>
+                  </fieldset>
                 </div>
-              </fieldset>
 
-              <fieldset>
-                <legend className="text-sm font-bold text-slate-600 uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <Phone size={14} /> Contacto de Emergencia
-                </legend>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Nombre</label>
-                    <input name="emergencyContact" value={formData.emergencyContact} onChange={handleChange}
-                      placeholder="María Pérez"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Teléfono</label>
-                    <input name="emergencyPhone" value={formData.emergencyPhone} onChange={handleChange}
-                      placeholder="310 000 0000"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-700" />
-                  </div>
-                </div>
-              </fieldset>
+              </div>
 
-              <div className="pt-4 flex gap-3">
+              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
                 <button type="button" onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition cursor-pointer">
+                  className="px-6 py-2 border border-gray-300 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition cursor-pointer">
                   Cancelar
                 </button>
                 <button type="submit" disabled={loadingAction}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-blue-400 cursor-pointer">
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-blue-400 cursor-pointer">
                   {loadingAction ? "Guardando..." : "Guardar"}
                 </button>
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {viewingPatient && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto border border-gray-300">
+            
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-slate-800 uppercase flex items-center gap-2.5">
+                {viewingPatient.firstName} {viewingPatient.lastName}
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border normal-case ${getStatusColor(viewingPatient.status)}`}>
+                  {viewingPatient.status === "activo" ? "Activo" : "Inactivo"}
+                </span>
+              </h3>
+              <button onClick={() => setViewingPatient(null)} className="text-slate-400 hover:text-slate-600 transition cursor-pointer">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Columna Izquierda: Datos Personales y Contacto */}
+                <div className="space-y-6">
+                  
+                  <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
+                    <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wide pb-2 border-b border-slate-200/60">
+                      Datos Personales
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+                      <div>
+                        <span className="block text-xs font-semibold text-slate-400">Documento</span>
+                        <span className="text-sm font-medium text-slate-700">{viewingPatient.document || "—"}</span>
+                      </div>
+                      <div>
+                        <span className="block text-xs font-semibold text-slate-400">Fecha de Nacimiento</span>
+                        <span className="text-sm font-medium text-slate-700">
+                          {formatDate(viewingPatient.birthDate)} ({calcAge(viewingPatient.birthDate)})
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-xs font-semibold text-slate-400">Género</span>
+                        <span className="text-sm font-medium text-slate-700">{viewingPatient.gender || "—"}</span>
+                      </div>
+                      <div>
+                        <span className="block text-xs font-semibold text-slate-400">Tipo de Sangre</span>
+                        <div className="mt-0.5">
+                          {viewingPatient.bloodType ? (
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${getBloodColor(viewingPatient.bloodType)}`}>
+                              {viewingPatient.bloodType}
+                            </span>
+                          ) : (
+                            <span className="text-sm font-medium text-slate-700">—</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
+                    <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wide pb-2 border-b border-slate-200/60">
+                      Contacto
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+                      <div>
+                        <span className="block text-xs font-semibold text-slate-400">Teléfono</span>
+                        <span className="text-sm font-medium text-slate-700">{viewingPatient.phone || "—"}</span>
+                      </div>
+                      <div>
+                        <span className="block text-xs font-semibold text-slate-400">Correo Electrónico</span>
+                        <span className="text-sm font-medium text-slate-700">{viewingPatient.email || "—"}</span>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <span className="block text-xs font-semibold text-slate-400">Dirección</span>
+                        <span className="text-sm font-medium text-slate-700">{viewingPatient.address || "—"}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Columna Derecha: Información Médica y Contacto de Emergencia */}
+                <div className="space-y-6">
+                  
+                  <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
+                    <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wide pb-2 border-b border-slate-200/60">
+                      Información Médica
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+                      <div>
+                        <span className="block text-xs font-semibold text-slate-400">EPS / Aseguradora</span>
+                        <span className="text-sm font-medium text-slate-700">{viewingPatient.eps || "—"}</span>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <span className="block text-xs font-semibold text-slate-400">Alergias conocidas</span>
+                        <p className="text-sm font-medium text-slate-700 bg-white border border-slate-200/60 rounded-lg p-2.5 mt-1 min-h-[60px] whitespace-pre-line">
+                          {viewingPatient.allergies || "Ninguna registrada."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50">
+                    <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wide pb-2 border-b border-slate-200/60">
+                      Contacto de Emergencia
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+                      <div>
+                        <span className="block text-xs font-semibold text-slate-400">Nombre de Contacto</span>
+                        <span className="text-sm font-medium text-slate-700">{viewingPatient.emergencyContact || "—"}</span>
+                      </div>
+                      <div>
+                        <span className="block text-xs font-semibold text-slate-400">Teléfono de Contacto</span>
+                        <span className="text-sm font-medium text-slate-700">{viewingPatient.emergencyPhone || "—"}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setViewingPatient(null)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60] animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md border border-gray-300 overflow-hidden">
+
+            {/* Header rojo */}
+            <div className="bg-red-50 border-b border-red-100 px-6 py-5 flex items-center gap-4">
+              <div className="w-11 h-11 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 border border-red-200">
+                <Trash2 size={20} className="text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-red-700">Eliminar paciente</h3>
+                <p className="text-sm text-red-500 mt-0.5">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+
+            {/* Cuerpo */}
+            <div className="px-6 py-5">
+              <p className="text-sm text-slate-600">
+                ¿Estás seguro de que deseas eliminar a{" "}
+                <span className="font-bold text-slate-800">{confirmDelete.name}</span>?
+                {" "}Se perderá toda su información registrada en el sistema.
+              </p>
+            </div>
+
+            {/* Acciones */}
+            <div className="px-6 pb-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(null)}
+                className="px-5 py-2 border border-gray-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(confirmDelete.id)}
+                className="px-5 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition cursor-pointer flex items-center gap-2"
+              >
+                <Trash2 size={14} />
+                Sí, eliminar
+              </button>
+            </div>
+
           </div>
         </div>
       )}
