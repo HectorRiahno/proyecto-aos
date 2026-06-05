@@ -179,6 +179,10 @@ export function AuthProvider({ children }) {
         throw new Error(
           `${LINK_NEEDED_TAG} Este correo ya está registrado ${providerMsg}. Inicia sesión con ese proveedor para vincular tu cuenta automáticamente.`
         );
+      } else if (error.code === "auth/password-does-not-meet-requirements") {
+        throw new Error(
+          "La contraseña no cumple los requisitos: debe tener al menos una letra mayúscula, un número y un carácter especial (ej: !, @, #)."
+        );
       }
       throw error;
     }
