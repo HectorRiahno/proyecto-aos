@@ -18,6 +18,9 @@ import UsersPage from '../pages/UsersPage'
 // Pacientes
 import PatientsPage from '../pages/PatientsPage'
 
+// Perfil
+import ProfilePage from '../pages/ProfilePage'
+
 // Playground Home
 import HomeHooks from '../playground/HomeHooks'
 
@@ -63,6 +66,9 @@ function AppRouter() {
 
       {/* pacientes */}
       <Route path="/patients" element={<PatientsPage />} />
+
+      {/* perfil */}
+      <Route path="/profile" element={<ProfilePage />} />
 
       {/* Playground */}
       <Route path="/playground" element={<HomeHooks />} />

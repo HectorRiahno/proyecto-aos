@@ -126,7 +126,7 @@ function SessionsPage() {
             </div>
             <h1 className="text-xl font-bold text-blue-600">HospitalIS PRO</h1>
           </div>
-          <h2 className="text-3xl font-bold text-slate-700">Historial de Sesiones</h2>
+          <h2 className="text-3xl font-bold text-slate-700">Historial de Auditoría</h2>
           <p className="text-slate-500 mt-1">Seguimiento de accesos de usuarios a la aplicación</p>
         </div>
         
