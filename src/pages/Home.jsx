@@ -80,7 +80,7 @@ function Home() {
       iconBg: "bg-white/20 text-white",
       descColor: "text-violet-100",
       arrowColor: "text-violet-200 group-hover:text-white",
-      onClick: null,
+      onClick: () => navigate('/doctors'),
     },
     {
       title: "Usuarios",

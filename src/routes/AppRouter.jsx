@@ -18,6 +18,9 @@ import UsersPage from '../pages/UsersPage'
 // Pacientes
 import PatientsPage from '../pages/PatientsPage'
 
+// Doctores
+import DoctorsPage from '../pages/DoctorsPage'
+
 // Perfil
 import ProfilePage from '../pages/ProfilePage'
 
@@ -66,6 +69,9 @@ function AppRouter() {
 
       {/* pacientes */}
       <Route path="/patients" element={<PatientsPage />} />
+
+      {/* doctores */}
+      <Route path="/doctors" element={<DoctorsPage />} />
 
       {/* perfil */}
       <Route path="/profile" element={<ProfilePage />} />
