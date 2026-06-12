@@ -21,6 +21,9 @@ import PatientsPage from '../pages/PatientsPage'
 // Doctores
 import DoctorsPage from '../pages/DoctorsPage'
 
+// Citas
+import AppointmentsPage from '../pages/AppointmentsPage'
+
 // Perfil
 import ProfilePage from '../pages/ProfilePage'
 
@@ -72,6 +75,9 @@ function AppRouter() {
 
       {/* doctores */}
       <Route path="/doctors" element={<DoctorsPage />} />
+
+      {/* citas */}
+      <Route path="/appointments" element={<AppointmentsPage />} />
 
       {/* perfil */}
       <Route path="/profile" element={<ProfilePage />} />
