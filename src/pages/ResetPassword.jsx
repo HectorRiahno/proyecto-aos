@@ -26,11 +26,13 @@ function ResetPage() {
   }, [oobCode]);
 
   // Reglas de validación
-  const hasMinLength = password.length >= 8;
-  const hasUppercase = /[A-Z]/.test(password);
-  const hasSpecialChar = /[@$!%*?&]/.test(password);
+  const hasMinLength   = password.length >= 10;
+  const hasUppercase   = /[A-Z]/.test(password);
+  const hasLowercase   = /[a-z]/.test(password);
+  const hasNumber      = /[0-9]/.test(password);
+  const hasSpecialChar = /[^a-zA-Z0-9]/.test(password);
 
-  const isValidPassword = hasMinLength && hasUppercase && hasSpecialChar;
+  const isValidPassword = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
 
   const isFormValid = isValidPassword && passwordsMatch && oobCode && !loading;
@@ -118,14 +120,20 @@ function ResetPage() {
             {/* Reglas visuales */}
             {touched.password && (
               <div className="text-xs mt-2 space-y-1">
-                <p className={hasMinLength ? 'text-green-500' : 'text-red-500'}>
-                  • Mínimo 8 caracteres
+                <p className={hasMinLength   ? 'text-green-500' : 'text-red-500'}>
+                  • Mínimo 10 caracteres
                 </p>
-                <p className={hasUppercase ? 'text-green-500' : 'text-red-500'}>
+                <p className={hasUppercase   ? 'text-green-500' : 'text-red-500'}>
                   • Al menos una mayúscula
                 </p>
+                <p className={hasLowercase   ? 'text-green-500' : 'text-red-500'}>
+                  • Al menos una minúscula
+                </p>
+                <p className={hasNumber      ? 'text-green-500' : 'text-red-500'}>
+                  • Al menos un número
+                </p>
                 <p className={hasSpecialChar ? 'text-green-500' : 'text-red-500'}>
-                  • Un carácter especial (@$!%*?&)
+                  • Un carácter especial (ej: !, @, #)
                 </p>
               </div>
             )}

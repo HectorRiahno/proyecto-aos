@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
-import { LogOut, LogIn, Search, Mail, Hospital } from "lucide-react";
+import { LogOut, LogIn, Search, Mail, Hospital, FileDown } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub, FaFacebook } from "react-icons/fa";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 function SessionsPage() {
   const navigate = useNavigate();
@@ -115,6 +117,153 @@ function SessionsPage() {
       : "bg-yellow-100 text-yellow-800";
   };
 
+  // Función para exportar PDF con toda la información de la tabla
+  const exportToPDF = () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+    // Fondo del encabezado
+    doc.setFillColor(30, 64, 175); // azul oscuro
+    doc.rect(0, 0, 297, 40, "F");
+
+    // Logo / ícono circular
+    doc.setFillColor(255, 255, 255);
+    doc.circle(18, 20, 8, "F");
+    doc.setTextColor(30, 64, 175);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("H", 15.5, 22);
+
+    // Título principal
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("HospitalIS PRO", 30, 15);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text("Historial de Auditoría — Reporte de Sesiones", 30, 24);
+
+    // Fecha de generación (esquina derecha)
+    const now = new Date();
+    doc.setFontSize(8);
+    doc.setTextColor(200, 210, 255);
+    doc.text(`Generado: ${now.toLocaleString("es-ES")}`, 297 - 8, 12, { align: "right" });
+
+    const activeFilter = filterType === "todos" ? "Todos" : filterType === "activa" ? "Activas" : "Finalizadas";
+    doc.text(`Filtro aplicado: ${activeFilter}  |  Búsqueda: "${search || "—"}"`, 297 - 8, 19, { align: "right" });
+
+    // Estadísticas rápidas
+    const totalSessions = filteredSessions.length;
+    const activeSessions = filteredSessions.filter(s => s.status === "activa").length;
+    const finishedSessions = filteredSessions.filter(s => s.status === "finalizada").length;
+
+    doc.setFillColor(241, 245, 249); // slate-100
+    doc.roundedRect(8, 46, 85, 18, 3, 3, "F");
+    doc.roundedRect(101, 46, 85, 18, 3, 3, "F");
+    doc.roundedRect(194, 46, 95, 18, 3, 3, "F");
+
+    doc.setTextColor(71, 85, 105);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("TOTAL DE SESIONES", 50.5, 52, { align: "center" });
+    doc.text("SESIONES ACTIVAS", 143.5, 52, { align: "center" });
+    doc.text("SESIONES FINALIZADAS", 241.5, 52, { align: "center" });
+
+    doc.setTextColor(30, 64, 175);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(String(totalSessions), 50.5, 60, { align: "center" });
+
+    doc.setTextColor(22, 163, 74);
+    doc.text(String(activeSessions), 143.5, 60, { align: "center" });
+
+    doc.setTextColor(234, 179, 8);
+    doc.text(String(finishedSessions), 241.5, 60, { align: "center" });
+
+    // Tabla de datos (TODAS las sesiones filtradas, no solo la página actual)
+    const tableRows = filteredSessions.map((session, index) => {
+      const status = session.status?.charAt(0).toUpperCase() + session.status?.slice(1) || "—";
+      const provider = session.provider?.charAt(0).toUpperCase() + session.provider?.slice(1) || "—";
+      return [
+        index + 1,
+        session.email || "—",
+        session.username || "—",
+        provider,
+        formatDate(session.loginTime),
+        session.logoutTime ? formatDate(session.logoutTime) : "— (Activa)",
+        calculateDuration(session.loginTime, session.logoutTime),
+        status
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 70,
+      head: [[
+        "#",
+        "Correo Electrónico",
+        "Usuario",
+        "Método",
+        "Fecha Entrada",
+        "Fecha Salida",
+        "Duración",
+        "Estado"
+      ]],
+      body: tableRows,
+      theme: "grid",
+      styles: {
+        fontSize: 8,
+        cellPadding: 3,
+        textColor: [30, 41, 59],
+        lineColor: [203, 213, 225],
+        lineWidth: 0.2
+      },
+      headStyles: {
+        fillColor: [30, 64, 175],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 8.5,
+        halign: "center"
+      },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 8 },
+        3: { halign: "center" },
+        6: { halign: "center" },
+        7: { halign: "center" }
+      },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      didParseCell: (data) => {
+        if (data.section === "body" && data.column.index === 7) {
+          const val = data.cell.raw;
+          if (val === "Activa") {
+            data.cell.styles.textColor = [22, 163, 74];
+            data.cell.styles.fontStyle = "bold";
+          } else if (val === "Finalizada") {
+            data.cell.styles.textColor = [161, 98, 7];
+            data.cell.styles.fontStyle = "bold";
+          }
+        }
+      },
+      margin: { left: 8, right: 8 },
+      didDrawPage: (data) => {
+        // Pie de página
+        const pageCount = doc.internal.getNumberOfPages();
+        const pageNum = doc.internal.getCurrentPageInfo().pageNumber;
+        doc.setFontSize(7);
+        doc.setTextColor(148, 163, 184);
+        doc.setFont("helvetica", "normal");
+        doc.text(
+          `HospitalIS PRO — Documento confidencial — Página ${pageNum} de ${pageCount}`,
+          297 / 2,
+          doc.internal.pageSize.height - 5,
+          { align: "center" }
+        );
+      }
+    });
+
+    const fileName = `auditoria_sesiones_${now.toISOString().slice(0, 10)}.pdf`;
+    doc.save(fileName);
+  };
+
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       {/* Header */}
@@ -126,16 +275,27 @@ function SessionsPage() {
             </div>
             <h1 className="text-xl font-bold text-blue-600">HospitalIS PRO</h1>
           </div>
-          <h2 className="text-3xl font-bold text-slate-700">Historial de Sesiones</h2>
+          <h2 className="text-3xl font-bold text-slate-700">Historial de Auditoría</h2>
           <p className="text-slate-500 mt-1">Seguimiento de accesos de usuarios a la aplicación</p>
         </div>
         
-        <button 
-          onClick={() => navigate('/Home')}
-          className="bg-slate-200 hover:bg-slate-300 transition px-4 py-2 rounded-lg text-sm font-medium cursor-pointer border border-gray-300"
-        >
-          Volver al Home
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={exportToPDF}
+            disabled={filteredSessions.length === 0}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-all px-4 py-2 rounded-lg text-sm font-semibold text-white shadow-sm cursor-pointer"
+            title="Exportar todas las sesiones filtradas a PDF"
+          >
+            <FileDown size={16} />
+            Exportar PDF
+          </button>
+          <button 
+            onClick={() => navigate('/Home')}
+            className="bg-slate-200 hover:bg-slate-300 transition px-4 py-2 rounded-lg text-sm font-medium cursor-pointer border border-gray-300"
+          >
+            Volver al Home
+          </button>
+        </div>
       </div>
 
       {/* Filtros */}

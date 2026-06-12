@@ -48,8 +48,16 @@ function RegisterPage() {
 
     if (!password) {
       newErrors.password = "La contraseña es obligatoria.";
-    } else if (password.length < 6) {
-      newErrors.password = "Debe tener al menos 6 caracteres.";
+    } else if (password.length < 10) {
+      newErrors.password = "Debe tener al menos 10 caracteres.";
+    } else if (!/[A-Z]/.test(password)) {
+      newErrors.password = "Debe contener al menos una letra mayúscula.";
+    } else if (!/[a-z]/.test(password)) {
+      newErrors.password = "Debe contener al menos una letra minúscula.";
+    } else if (!/[0-9]/.test(password)) {
+      newErrors.password = "Debe contener al menos un número.";
+    } else if (!/[^a-zA-Z0-9]/.test(password)) {
+      newErrors.password = "Debe contener al menos un carácter especial (ej: !, @, #).";
     }
 
     return newErrors;
