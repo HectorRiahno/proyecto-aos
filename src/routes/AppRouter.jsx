@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 // Auth Pages
 import LoginPage from '../pages/LoginPage'
@@ -51,59 +52,101 @@ import UseOptimistic from '../playground/UseOptimistic'
 import UseActionState from '../playground/UseActionState'
 import UseFormStatus from '../playground/UseFormStatus'
 
+// Componente para proteger rutas privadas y de administrador
+function ProtectedRoute({ children, requireAdmin = false }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <h1 className="text-xl font-semibold text-slate-600">Cargando...</h1>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (requireAdmin && user.role !== 'admin') {
+    return <Navigate to="/Home" replace />;
+  }
+
+  return children;
+}
+
+// Componente para evitar que usuarios autenticados entren a Login/Register
+function PublicRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <h1 className="text-xl font-semibold text-slate-600">Cargando...</h1>
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/Home" replace />;
+  }
+
+  return children;
+}
+
 function AppRouter() {
   return (
     <Routes>
 
-      {/* auth */}
-      <Route path="/" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot" element={<ForgotPage />} />
-      <Route path="/reset" element={<ResetPage />} />
+      {/* auth (Rutas Públicas) */}
+      <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+      <Route path="/forgot" element={<PublicRoute><ForgotPage /></PublicRoute>} />
+      <Route path="/reset" element={<PublicRoute><ResetPage /></PublicRoute>} />
 
-      {/* Home */}
-      <Route path="/Home" element={<Home />} />
+      {/* Home (Privada) */}
+      <Route path="/Home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
 
-      {/* sesiones */}
-      <Route path="/sessions" element={<SessionsPage />} />
+      {/* sesiones (Privada - Solo Admin) */}
+      <Route path="/sessions" element={<ProtectedRoute requireAdmin={true}><SessionsPage /></ProtectedRoute>} />
 
-      {/* usuarios */}
-      <Route path="/users" element={<UsersPage />} />
+      {/* usuarios (Privada - Solo Admin) */}
+      <Route path="/users" element={<ProtectedRoute requireAdmin={true}><UsersPage /></ProtectedRoute>} />
 
-      {/* pacientes */}
-      <Route path="/patients" element={<PatientsPage />} />
+      {/* pacientes (Privada) */}
+      <Route path="/patients" element={<ProtectedRoute><PatientsPage /></ProtectedRoute>} />
 
-      {/* doctores */}
-      <Route path="/doctors" element={<DoctorsPage />} />
+      {/* doctores (Privada) */}
+      <Route path="/doctors" element={<ProtectedRoute><DoctorsPage /></ProtectedRoute>} />
 
-      {/* citas */}
-      <Route path="/appointments" element={<AppointmentsPage />} />
+      {/* citas (Privada) */}
+      <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
 
-      {/* perfil */}
-      <Route path="/profile" element={<ProfilePage />} />
+      {/* perfil (Privada) */}
+      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
-      {/* Playground */}
-      <Route path="/playground" element={<HomeHooks />} />
+      {/* Playground (Privada) */}
+      <Route path="/playground" element={<ProtectedRoute><HomeHooks /></ProtectedRoute>} />
 
-      <Route path="/playground/useState" element={<UseStatePractice />} />
-      <Route path="/playground/useDebugValue" element={<UseDebugValuePractice />} />
-      <Route path="/playground/useReducer" element={<UseReducerPractice />} />
-      <Route path="/playground/useRef" element={<UseRefPractice />} />
-      <Route path="/playground/useImperativeHandle" element={<UseImperativeHandlePractice />} />
-      <Route path="/playground/useMemo" element={<UseMemoPractice />} />
-      <Route path="/playground/useCallback" element={<UseCallbackPractice />} />
-      <Route path="/playground/useTransition" element={<UseTransitionPractice />} />
-      <Route path="/playground/useDeferredValue" element={<UseDeferredValuePractice />} />
-      <Route path="/playground/useEffect" element={<UseEffectPractice />} />
-      <Route path="/playground/useLayoutEffect" element={<UseLayoutEffectPractice />} />
-      <Route path="/playground/useInsertionEffect" element={<UseInsertionEffectPractice />} />
-      <Route path="/playground/useContext" element={<UseContextPractice />} />
-      <Route path="/playground/useSyncExternalStore" element={<UseSyncExternalStore />} />
-      <Route path="/playground/useId" element={<UseId />} />
-      <Route path="/playground/use" element={<Use />} />
-      <Route path="/playground/useOptimistic" element={<UseOptimistic />} />
-      <Route path="/playground/useActionState" element={<UseActionState />} />
-      <Route path="/playground/useFormStatus" element={<UseFormStatus />} />
+      <Route path="/playground/useState" element={<ProtectedRoute><UseStatePractice /></ProtectedRoute>} />
+      <Route path="/playground/useDebugValue" element={<ProtectedRoute><UseDebugValuePractice /></ProtectedRoute>} />
+      <Route path="/playground/useReducer" element={<ProtectedRoute><UseReducerPractice /></ProtectedRoute>} />
+      <Route path="/playground/useRef" element={<ProtectedRoute><UseRefPractice /></ProtectedRoute>} />
+      <Route path="/playground/useImperativeHandle" element={<ProtectedRoute><UseImperativeHandlePractice /></ProtectedRoute>} />
+      <Route path="/playground/useMemo" element={<ProtectedRoute><UseMemoPractice /></ProtectedRoute>} />
+      <Route path="/playground/useCallback" element={<ProtectedRoute><UseCallbackPractice /></ProtectedRoute>} />
+      <Route path="/playground/useTransition" element={<ProtectedRoute><UseTransitionPractice /></ProtectedRoute>} />
+      <Route path="/playground/useDeferredValue" element={<ProtectedRoute><UseDeferredValuePractice /></ProtectedRoute>} />
+      <Route path="/playground/useEffect" element={<ProtectedRoute><UseEffectPractice /></ProtectedRoute>} />
+      <Route path="/playground/useLayoutEffect" element={<ProtectedRoute><UseLayoutEffectPractice /></ProtectedRoute>} />
+      <Route path="/playground/useInsertionEffect" element={<ProtectedRoute><UseInsertionEffectPractice /></ProtectedRoute>} />
+      <Route path="/playground/useContext" element={<ProtectedRoute><UseContextPractice /></ProtectedRoute>} />
+      <Route path="/playground/useSyncExternalStore" element={<ProtectedRoute><UseSyncExternalStore /></ProtectedRoute>} />
+      <Route path="/playground/useId" element={<ProtectedRoute><UseId /></ProtectedRoute>} />
+      <Route path="/playground/use" element={<ProtectedRoute><Use /></ProtectedRoute>} />
+      <Route path="/playground/useOptimistic" element={<ProtectedRoute><UseOptimistic /></ProtectedRoute>} />
+      <Route path="/playground/useActionState" element={<ProtectedRoute><UseActionState /></ProtectedRoute>} />
+      <Route path="/playground/useFormStatus" element={<ProtectedRoute><UseFormStatus /></ProtectedRoute>} />
 
       
       <Route path="*" element={<Navigate to="/" />} />
