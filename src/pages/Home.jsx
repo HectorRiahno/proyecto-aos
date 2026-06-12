@@ -63,7 +63,7 @@ function Home() {
       iconBg: "bg-white/20 text-white",
       descColor: "text-emerald-100",
       arrowColor: "text-emerald-200 group-hover:text-white",
-      onClick: null,
+      onClick: () => navigate('/appointments'),
     },
     {
       title: "Médicos",
