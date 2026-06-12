@@ -10,7 +10,7 @@ import {
 import {
   Search, Plus, X, Edit2, Trash2, Calendar, Clock,
   User, Stethoscope, FileText, AlertCircle, CheckCircle,
-  Hospital, Activity, ChevronRight
+  Hospital, Activity, Eye
 } from "lucide-react";
 
 const ITEMS_PER_PAGE = 8;
@@ -61,6 +61,7 @@ export default function AppointmentsPage() {
   // Modals & Forms
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [viewingDetails, setViewingDetails] = useState(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -454,6 +455,13 @@ export default function AppointmentsPage() {
                       <td className="px-5 py-4">
                         <div className="flex gap-2">
                           <button
+                            onClick={() => setViewingDetails(appt)}
+                            title="Ver Detalles"
+                            className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
                             onClick={() => openEdit(appt)}
                             title="Editar Cita"
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer"
@@ -524,6 +532,121 @@ export default function AppointmentsPage() {
           </div>
         </div>
       )}
+
+      {/* View Details Modal */}
+      {viewingDetails && (() => {
+        const docObj = doctorMap[viewingDetails.medicoId];
+        const patObj = patientMap[viewingDetails.pacienteId];
+
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-gray-300 overflow-hidden">
+              <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-slate-50">
+                <h3 className="text-lg font-bold text-slate-700 flex items-center gap-2">
+                  <Activity size={20} className="text-blue-600" />
+                  Detalles Completos de la Cita
+                </h3>
+                <button onClick={() => setViewingDetails(null)} className="text-slate-400 hover:text-slate-600 transition cursor-pointer"><X size={22} /></button>
+              </div>
+
+              <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                {/* Datos Cita Principal */}
+                <div className="grid grid-cols-2 gap-4 bg-blue-50/50 p-4 border border-blue-100 rounded-xl">
+                  <div>
+                    <span className="block text-[11px] font-bold text-blue-500 uppercase tracking-wider">Fecha de la Cita</span>
+                    <span className="text-slate-700 font-semibold text-sm flex items-center gap-1.5 mt-1">
+                      <Calendar size={14} className="text-blue-500" />
+                      {formatDate(viewingDetails.fecha)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[11px] font-bold text-blue-500 uppercase tracking-wider">Hora Programada</span>
+                    <span className="text-slate-700 font-semibold text-sm flex items-center gap-1.5 mt-1">
+                      <Clock size={14} className="text-blue-500" />
+                      {viewingDetails.hora || "—"}
+                    </span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block text-[11px] font-bold text-blue-500 uppercase tracking-wider">Estado de la Cita</span>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border capitalize mt-1.5 ${getStatusStyle(viewingDetails.estado)}`}>
+                      {viewingDetails.estado}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Paciente */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b pb-1">Información del Paciente</h4>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 mt-1 flex-shrink-0">
+                      {patObj ? `${patObj.firstName?.charAt(0).toUpperCase()}${patObj.lastName?.charAt(0).toUpperCase()}` : <User size={16} />}
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
+                      <div className="col-span-2">
+                        <span className="text-xs text-slate-400 font-medium">Nombre Completo</span>
+                        <p className="text-sm text-slate-800 font-semibold">{patObj ? `${patObj.firstName} ${patObj.lastName}` : "Paciente no encontrado"}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-slate-400 font-medium">Documento (CC)</span>
+                        <p className="text-sm text-slate-700 font-medium">{patObj?.document || "—"}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-slate-400 font-medium">Teléfono / Celular</span>
+                        <p className="text-sm text-slate-700 font-medium">{patObj?.phone || "—"}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-xs text-slate-400 font-medium">Correo Electrónico</span>
+                        <p className="text-sm text-slate-700 font-medium">{patObj?.email || "—"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Médico */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b pb-1">Médico Asignado</h4>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-600 mt-1 flex-shrink-0">
+                      <Stethoscope size={18} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
+                      <div className="col-span-2">
+                        <span className="text-xs text-slate-400 font-medium">Nombre del Médico</span>
+                        <p className="text-sm text-slate-800 font-semibold">{docObj ? `Dr. ${docObj.nombre} ${docObj.apellido}` : "Médico no encontrado"}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-slate-400 font-medium">Especialidad</span>
+                        <p className="text-sm text-slate-700 font-medium">{docObj?.especialidad || "—"}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-slate-400 font-medium">Teléfono</span>
+                        <p className="text-sm text-slate-700 font-medium">{docObj?.telefono || "—"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Motivo de la Consulta */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b pb-1">Motivo de la Cita / Observaciones</h4>
+                  <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl">
+                    <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{viewingDetails.motivo || "—"}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-gray-200 bg-slate-50 flex justify-end">
+                <button
+                  onClick={() => setViewingDetails(null)}
+                  className="px-5 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition cursor-pointer text-sm"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Save Modal */}
       {isModalOpen && (
